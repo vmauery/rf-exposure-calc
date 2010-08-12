@@ -1,0 +1,522 @@
+<!DOCTYPE HTML>
+<!--
+RFE_Calc is free software: you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License as  published
+by the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version.
+
+RFE_Calc is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with RFE_Calc.  If not, see <http://www.gnu.org/licenses/>.
+
+Copyright © 2009-2010, Vernon Mauery (N7OH)
+-->
+<html><head>
+  <meta charset="UTF-8">
+  <meta name="keywords" content="Amateur Radio RF Safety Calculator, RF Safety, RF Calculator, RF Safety Calculator, frequency, bands, licence, radio frequency, RF, MPE">
+  <meta name="description" content="Calculate RF exposures for various transmitters, antennas and other settings">
+  <title>RFE Calculator</title>
+  <style>
+div.value {
+	display: inline;
+}
+td.value {
+	text-align: center;
+}
+div.transmitter, div.antenna, div.connection {
+	border: 2px solid gray;
+	margin: 1em;
+	padding: 0em 1em .25em 1em;
+}
+td.compliant {
+	color: green;
+}
+td.noncompliant {
+	color: red;
+}
+table {
+	table-layout: fixed;
+}
+table th {
+	text-align: left;
+}
+table td {
+	padding: 0em .5em 0em .5em;
+}
+table.results {
+	border: 1px solid;
+}
+table.results td, table.results th {
+	border: 1px solid gray;
+}
+table.results td {
+	padding: .1em .5em 0em .5em;
+}
+a.link {
+	cursor: pointer;
+}
+.action-box {
+	display: none;
+}
+div.action-box {
+	float: right;
+}
+  </style>
+  <link type="text/css" href="css/ui.all.css" rel="stylesheet" />
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/ui.core.js"></script>
+  <script type="text/javascript" src="js/ui.tabs.js"></script>
+  <script type="text/javascript" src="js/modernizr.js"></script>
+  <script type="text/javascript" src="js/json2.js"></script>
+  <script type="text/javascript">
+<!--//
+(function($) {$(function() {
+
+const cm_per_foot = 30.48;
+
+function select_options(list, selected) {
+	var opts = "";
+	for (var k in list) {
+		if (k == selected) {
+			select = ' selected="selected"';
+		} else {
+			select = '';
+		}
+		opts += '<option value="'+k+'"'+select+'>'+k+'</option>';
+	}
+	return opts;
+}
+function TransmitterBand(band, bandinfo) {
+	/* initializer */
+	this.id = TransmitterBand.common_id++;
+	if ( band != null && bandinfo != null) {
+		this.band = band;
+		this.power = bandinfo[0];
+		this.mod = bandinfo[1];
+		this.ce = bandinfo[2];
+		this.ue = bandinfo[3];
+	}
+
+	/* member functions */
+	this.editor = function(index, row) {
+		if (row == null) {
+			row = ['','','','',''];
+		}
+		// band is a select, power is input, modulation is select, ce is input, ue is input
+		var ret = '<label for="transmitter-'+this.id+'-band-'+index+'">Band</label><select id="transmitter-'+this.id+'-band-'+index+'">'+select_options(bands, this.band)+'</select/>';
+		ret += '<label for="transmitter-'+this.id+'-power-'+index+'">Power</label><input type="textbox" id="transmitter-'+this.id+'-power-'+index+'" value="'+row[1]+'"/>';
+		ret += '<label for="transmitter-'+this.id+'-mod-'+index+'">Modulation</label><select id="transmitter-'+this.id+'-mod-'+index+'">'+select_options(modulation_duty_factor, this.mod)+'</select>';
+		ret += '<label for="transmitter-'+this.id+'-ce-'+index+'">Controlled Exposure</label><input type="textbox" id="transmitter-'+this.id+'-ce-'+index+'" value="'+row[3]+'"/>';
+		ret += '<label for="transmitter-'+this.id+'-ue-'+index+'">Uncontrolled Exposure</label><input type="textbox" id="transmitter-'+this.id+'-ue-'+index+'" value="'+row[4]+'"/>';
+		return ret;
+	};
+}
+TransmitterBand.common_id = 0;
+
+function Transmitter(name, bands) {
+	/* intializer */
+	if (name == null) name = "";
+	this.id = Transmitter.common_id++;
+	this.name = name;
+	this.bands = {};
+	if (bands != null) {
+		for (band in bands) {
+			var b = new TransmitterBand(band, bands[band]);
+			this.bands[band] = b;
+		}
+	}
+	/* member functions */
+	this.child_submit = function() {
+		
+	};
+	this.editor = function() {
+		var ret = '<label for="transmitter-'+this.id+'">Name</label><input type="textbox" id="transmitter-'+this.id+'" name="name" value="'+this.name+'"/>';
+		var i;
+		for (i=0;i<this.bands.length;i++) {
+			ret += this.child_editor(i, this.bands[i]);
+		}
+		return ret;
+	};
+	this.submit = function() {
+		
+	};
+	this.render = function() {
+		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-transmitterband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-transmitter-'+this.id+'">Delete transmitter</a></div><h4>'+name+'</h4>\n<table width="100%">';
+		out += '<tr><th width="15%">Band</th><th width="15%">Power (W)</th><th width="30%">Modulation</th><th>Controlled<br/>Exposure (%)</th><th>Uncontrolled<br/>Exposure (%)</th><th></th></tr>\n';
+		for (var band in this.bands) {
+			out += '<tr class="action-popup"><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-transmitterband-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-transmitterband-'+this.id+'">Delete</a></td></td></tr>\n';
+		}
+		out += '</table></div>';
+		return out;
+	};
+}
+Transmitter.common_id = 0;
+
+function Antenna(name, bands, cdx, udx, ground) {
+	this.name = name;
+	this.bands = bands;
+	this.cdx = cdx;
+	this.udx = udx;
+	this.ground = ground;
+	this.id = Antenna.common_id++;
+
+	this.render = function() {
+		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-antennaband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-antenna-'+this.id+'">Delete antenna</a></div><h4>'+name+'</h4>\nDistances: Controlled exposure@'+this.cdx+'ft, Uncontrolled exposure@'+this.udx+'ft; Ground:'+this.ground+'<ul>';
+		for (var band in this.bands) {
+			out += '<li class="action-popup">'+band+' @ '+this.bands[band]+' dBi</li>\n';
+		}
+		out += '</ul></div>';
+		return out;
+	};
+}
+Antenna.common_id = 0;
+
+function Connection(transmitter, antenna, tuner_loss, wire, length, other_loss) {
+	this.transmitter = transmitter;
+	this.tuner_loss = tuner_loss;
+	this.wire = wire;
+	this.length = length;
+	this.other_loss = other_loss;
+	this.antenna = antenna;
+	this.render = function() {
+		var out = '<div class="connection action-popup"><div class="action-box"></div><h4>\''+this.transmitter+'\' to \''+this.antenna+'\' via '+ this.length+' ft of \''+this.wire+'\'</h4>\n<ul>';
+		out += '<li>Transmitter: '+this.transmitter+'</li>\n';
+		out += '<li>Antenna: '+this.antenna+'</li>\n';
+		out += '<li>Tuner losses: '+this.tuner_loss+'</li>\n';
+		out += '<li>Wire type: '+this.wire+'</li>\n';
+		out += '<li>Wire length: '+this.length+'</li>\n';
+		out += '<li>Other losses: '+this.other_loss+'</li>\n';
+		out += '</ul></div>';
+		return out;
+	};
+}
+Connection.common_id = 0;
+
+function popup_box(html) {
+		$('body').append('<div class="popup">'+html+'</div>');
+		$('.popup').unbind('click').click(function(e) {
+			$(this).remove();
+		});
+	};
+function add_a_thing(ele) {
+	var id = $(ele).attr('id').replace(/add-a-([^-]*).*/, '$1');
+	var type = null;
+	switch (id) {
+		case "transmitter": type = "Transmitter"; break;
+		case "transmitterband": type = "TransmitterBand"; break;
+		case "antenna": type = "Antenna"; break;
+		case "antennaband": type = "AntennaBand"; break;
+		case "connection": type = "Connection"; break;
+	}
+	if (type == null) return;
+	var thing = eval("new "+type+"()");
+	var form = thing.editor();
+	popup_box(form);
+}
+
+function post_render() {
+	$(".link").filter(".add-a").unbind('click').click(function() {
+			add_a_thing(this);
+	});
+	$(".link").filter(".del-a").unbind('click').click(function() {
+			del_a_thing(this);
+	});
+	$(".link").filter(".edit-a").unbind('click').click(function() {
+			edit_a_thing(this);
+	});
+}
+
+var wires = {
+	'RG-8X': {'160m':0.349, '80m':0.656, '60m':0.809, '40m':0.931, '30m':1.116, '20m':1.352, '17m':1.507, '15m':1.631, '12m':1.855, '10m':1.890, '6m':2.55, '2m':4.458,},
+	'RG-213/U': {'160m':0.192, '80m':0.361, '60m':0.446, '40m':0.514, '30m':0.616, '20m':0.732, '17m':0.833, '15m':0.901, '12m':1.026, '10m':1.045, '6m':1.413, '2m':2.482, },
+	'LL-400': {'160m':0.2, '80m':0.22, '60m':0.28, '40m':0.3, '30m':0.35, '20m':0.40, '17m':0.45, '15m':0.54, '12m':0.6, '10m':0.67, '6m':0.88, '2m':1.52, '220 MHz':1.86, '440 MHz':2.71, '900 MHz':3.9, },
+	'LL-600': {'160m':0.1, '80m':0.12, '60m':0.14, '40m':0.16, '30m':0.2, '20m':0.22, '17m':0.25, '15m':0.29, '12m':0.35, '10m':0.43, '6m':0.55, '2m':0.98, '220 MHz':1.19, '440 MHz':1.71, '900 MHz':2.5, },
+	'WM CQ 551': {'160m':0.02, '80m':0.04, '60m':0.06, '40m':0.08, '30m':0.08, '20m':0.10, '17m':0.12, '15m':0.12, '12m':0.13, '10m':0.14, '6m':0.15, '2m':0.35, },
+};
+var bands = {
+	'160m':[1800000,2000000],
+	'80m':[3500000,4000000],
+	'60m':[5330000,5405000],
+	'40m':[7000000,7300000],
+	'30m':[10100000,10150000],
+	'20m':[14000000,14350000],
+	'17m':[18068000,18168000],
+	'15m':[21000000,21450000],
+	'12m':[24890000,24990000],
+	'10m':[28000000,29700000],
+	'6m':[50000000,54000000],
+	'2m':[144000000,148000000],
+	'220 MHz':[222000000,225000000],
+	'440 MHz':[420000000,450000000],
+	'900 MHz':[902000000,928000000],
+	'1.2 GHz':[1240000000,1300000000],
+	'2.3 GHz':[2300000000,2310000000],
+	'2.4 GHz':[2390000000,2450000000],
+	'3.3 GHz':[3300000000,3500000000],
+	'5.6 GHz':[5650000000,5925000000],
+	'10 GHz':[10000000000,10500000000],
+	'24 GHz':[24000000000,24250000000],
+	'47 GHz':[47000000000,47200000000],
+	'76 GHz':[76000000000,81000000000],
+	'122 GHz':[122250000000,123000000000],
+	'134 GHz':[134000000000,141000000000],
+	'241 GHz':[241000000000,250000000000],
+	'275 GHz':[275000000000,300000000000],
+};
+
+var modulation_duty_factor = {
+	'CW': 40,
+	'SSB voice low': 20,
+	'SSB voice high': 40,
+	'FM': 100,
+	'SSB AFSK': 100,
+	'SSB SSTV': 100,
+	'AM 50%': 50,
+	'AM 100%': 25,
+	'AM 0%': 100,
+	'ATV': 60,
+};
+
+var transmitters = {
+	// Transmitter(name, bands)
+	//band info is [power, duty cycle, win_c, win_u]
+	'IC-7000':new Transmitter('IC-7000', {'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30], '6m':[100, 'FM', 50, 50], '2m':[50, 'FM', 50, 50], '440 MHz':[30, 'FM', 50, 50]}),
+	'Elecraft K3/100':new Transmitter('Elecraft K3/100', {'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30]}),
+    'IC-92AD':new Transmitter('IC-92AD', {'2m':[5, 'FM', 50, 50], '440 MHz':[5, 'FM', 50, 50]}),
+};
+var antennas = {
+	// Antenna(name, bands, cdx, udx, ground)
+	'Center-fed Zepp':new Antenna('Center-fed Zepp', {'80m':1.9, '60m':2.0, '40m':2.5, '30m':3.1, '20m':3.1, '17m':3.1, '15m':3.1, '12m':3.2, '10m':3.2,}, 18, 16, true),
+	'6/2/440 collinear':new Antenna('6/2/440 collinear', {'6m':3.07, '2m':8.3, '440 MHz':11.7}, 6, 15, true),
+	'2/440 collinear':new Antenna('2/440 collinear', {'2m':3.76, '440 MHz':4.32}, 1, 50, true),
+	'2/440 dipole':new Antenna('2/440 dipole', {'2m':2.2, '440 MHz':3.02}, 1, 50, true),
+};
+var connections = [
+	// Connection(transmitter, antenna, tuner_loss, wire, length, other_loss)
+	new Connection('Elecraft K3/100', 'Center-fed Zepp', 0.1, 'LL-400', 150, 0.2),
+	new Connection('IC-7000', 'Center-fed Zepp', 0.1, 'RG-8X', 150, 0.2),
+	new Connection('IC-7000', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2),
+	new Connection('IC-92AD', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2),
+	new Connection('IC-92AD', '2/440 collinear', 0.0, 'LL-400', 30.0, 0.0),
+	new Connection('IC-92AD', '2/440 dipole', 0.0, 'LL-400', 30.0, 0.0),
+];
+
+function show_transmitters() {
+	for (var t in transmitters) {
+		$('#transmitters').append(transmitters[t].render());
+	}
+}
+function show_antennas() {
+	for (var a in antennas) {
+		$('#antennas').append(antennas[a].render());
+	}
+}
+function show_connections() {
+	for (var c in connections) {
+		$('#connections').append(connections[c].render());
+	}
+}
+function show_results() {
+	for (var c in connections) {
+		var con = connections[c];
+		var tm = transmitters[con.transmitter];
+		var ant = antennas[con.antenna];
+		ctable = '<h3>\''+con.transmitter+'\' to \''+con.antenna+'\' via '+ con.length+' ft of \''+con.wire+'\'</h3>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft';
+		ctable += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
+		ctable += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
+		for (var b in tm.bands) {
+			if (ant.bands[b] == null) continue;
+			var band = tm.bands[b];
+			var freq = bands[b][1];
+			var line_loss = (con.length/100.0)*wires[con.wire][b];
+			if (wires[con.wire][b] == null) {
+				alert("Wire '"+con.wire+"' has no loss info at "+b);
+				line_loss = 0;
+			}
+			var tloss = con.tuner_loss + con.other_loss + line_loss;
+			tloss = Math.pow(10, -(tloss/10.0));
+			var gain = Math.pow(10, ant.bands[b]/10.0);
+			results = '<tr>';
+			// calculate rfe/mpe/mdx for transmitter power at band with connection losses
+			ce = calc_exposure(true, band.power, modulation_duty_factor[band.mod]/100.0, band.ce/100.0, tloss, gain, freq, ant.cdx*cm_per_foot, ant.ground);
+			ue = calc_exposure(false, band.power, modulation_duty_factor[band.mod]/100.0, band.ue/100.0, tloss, gain, freq, ant.udx*cm_per_foot, ant.ground);
+			results += '<td>'+b+'</td><td>'+band.power+'</td><td>'+con.tuner_loss+'</td>';
+			results += '<td>'+line_loss.toPrecision(4)+'</td><td>'+con.other_loss+'</td>';
+			results += '<td>'+ant.bands[b].toPrecision(4)+'</td>';
+			results += '<td>'+(band.power*tloss*gain).toPrecision(4)+'</td>';
+			// controlled exposure
+			results += '<td>'+ce.mpe.toPrecision(4)+'</td>';
+			results += '<td>'+ce.rfe.toPrecision(4)+'</td>';
+			results += '<td>'+(ce.mdx/cm_per_foot).toPrecision(4)+'</td>';
+			results += '<td class="'+(ce.rfe < ce.mpe ? '':'non')+'compliant">'+(ce.rfe < ce.mpe ? 'Yes':'No')+'</td>';
+			// uncontrolled exposure
+			results += '<td>'+ue.mpe.toPrecision(4)+'</td>';
+			results += '<td>'+ue.rfe.toPrecision(4)+'</td>';
+			results += '<td>'+(ue.mdx/cm_per_foot).toPrecision(4)+'</td>';
+			results += '<td class="'+(ue.rfe < ue.mpe ? '':'non')+'compliant">'+(ue.rfe < ue.mpe ? 'Yes':'No')+'</td>';
+			results += '</tr>';
+			ctable += results;
+		}
+		$('#results').append(ctable);
+	}
+// | transmitter | power | band | tuner losses | line losses | other losses | rfe | mpe | mdx | ok
+}
+function export_data() {
+}
+function import_data() {
+}
+function calc_mpe(frequency, controlled) {
+		frequency /= 1000000;
+		if (frequency < 1.34) {
+			return 100.0;
+		}  /**  Below 1.34 MHz  **/
+		else if (frequency < 3.0) {
+			if (controlled) return 100.0;
+			return 180.0 / (Math.pow(frequency,2));
+		}  /**  Below 3.0 MHz  **/
+		else if (frequency < 30.0) {
+			if (controlled) return 900.0 / Math.pow(frequency,2);
+			return 180.0 / (Math.pow(frequency,2));
+		}  /**  Below 30 MHz  **/
+		else if (frequency < 300.0) {
+			if (controlled) return 1.0;
+			return 0.2;
+		}  /**  Below 300 MHz  **/
+		else if (frequency < 1500.0) {
+			if (controlled) return frequency / 300.0
+			return frequency / 1500.0;
+		}  /**  Below 1500 MHz  **/
+		else if (frequency < 100000.0) {
+			if (controlled) return 5.0;
+			return 1.0;
+		}  /**  Below 100 GHz  **/
+		else {  /**  Frequency too high  **/
+			alert("The FCC does not have exposure limits above 100 GHz.\nPlease try again.");
+			return;
+		}  /**  Frequency too high  **/
+}
+/* inputs:
+  @controlled: this is controlled or uncontrolled (bool)
+  @watts: max watts at transmitter
+  @tdc: transmission duty cycle (~20% for voice, ~40% for CW)
+  @winave: average window x/6 for controlled, x/30 for controlled
+  @tloss: total losses from transmitter to antenna (fraction, not in dB)
+  @gain: antenna gain (fraction, not in dB)
+  @dx: distance from center of antenna in cm
+  @ground: calculate ground reflections (bool)
+  returns:
+  @pd: power density
+  @mpe: maximum permissible exposure
+  @dxm: minimum distance to compliance in cm
+*/
+var alerted = 0;
+function calc_exposure(controlled, watts, tdc, winave, tloss, gain, freq, dx, ground) {
+	var power = tdc * tloss * watts * 1000 * winave * gain;
+	if (!alerted) {
+	//alert("calc_exposure(controlled, watts, tdc, winave, tloss, gain, freq, dx, ground)\n"+"calc_exposure("+controlled+", "+watts+", "+tdc+", "+winave+", "+tloss+", "+gain+", "+freq+", "+dx+", "+ground+")\npower = "+power+"\npi = "+Math.PI);
+	alerted = 1;
+	}
+	var rfe, mpe, mdx;
+	if ((power > 0) && (dx > 0)) {
+		if (ground)
+			gf = 0.64;
+		else
+			gf = 0.25;
+		rfe = (gf * power) / (Math.PI * Math.pow(dx,2));
+		mpe = calc_mpe(freq, controlled);
+		mdx = Math.sqrt((gf * power)/(mpe * Math.PI));
+	}
+	//alert("{rfe:"+rfe+", mpe:"+mpe+", mdx:"+mdx+"}");
+	return {rfe:rfe, mpe:mpe, mdx:mdx};
+}
+function do_interactive() {
+	$('.action-popup').hover(function() {
+		$(this).children().filter('.action-box').show();
+	}, function() {
+		$(this).children().filter('.action-box').hide();
+	});
+}
+function setvar(name, value) {
+	window.localStorage[name] = JSON.stringify(value);
+}
+function getvar(name) {
+	return JSON.parse(window.localStorage[name]);
+}
+
+ $("#tabs").tabs();
+ if (!Modernizr.localstorage) {
+  alert('Your browser does not have local storage\nThis means that you will not be able to save\nany of your changes.');
+ }
+
+ bands = getvar('bands');
+ show_transmitters();
+ show_antennas();
+ show_connections();
+ show_results();
+ do_interactive();
+ post_render();
+
+}); })(jQuery);
+ 
+-->
+  </script>
+</head><body bgcolor="#ffffff" text="#000000">
+
+<div id="tabs">
+    <ul>
+        <li><a href="#transmitters"><span>Transmitters</span></a></li>
+        <li><a href="#antennas"><span>Antennas</span></a></li>
+        <li><a href="#connections"><span>Connections</span></a></li>
+        <li><a href="#results"><span>Results</span></a></li>
+		<li><a href="#eximport"><span>Import/Export</span></a></li>
+		<li><a href="#help"><span>Help</span></a></li>
+    </ul>
+    <div id="transmitters">
+	<a class="link add-a" id="add-a-transmitter">Add a transmitter</a>
+    </div>
+    <div id="antennas">
+	<a class="link add-a" id="add-a-antenna">Add an antenna</a>
+    </div>
+    <div id="connections">
+	<a class="link add-a" id="add-a-connection">Add a connection</a>
+    </div>
+    <div id="results">
+    </div>
+    <div id="eximport">
+        <textarea rows="25" cols=100">
+        Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+        Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+		</textarea>
+    </div>
+	<div id="help">
+	<h2>Transmitters</h2>
+	<h2>Antennas</h2>
+	<h2>Connections</h2>
+	<h2>Results</h2>
+	<h2>Import/Export</h2>
+	<h2>About</h2>
+	RFE Calculator - A tool to help hams figure out the mysteries of RFE<br/>
+    Copyright &copy; 2009-2010 Vernon Mauery (N7OH)<br/>
+	<br/>
+    This program is free software: you can redistribute it and/or modify<br/>
+    it under the terms of the GNU General Public License as published by<br/>
+    the Free Software Foundation, either version 3 of the License, or<br/>
+    (at your option) any later version.<br/>
+	<br/>
+    This program is distributed in the hope that it will be useful,<br/>
+    but WITHOUT ANY WARRANTY; without even the implied warranty of<br/>
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br/>
+    GNU General Public License for more details.<br/>
+	<br/>
+    You should have <a href="LICENSE">received a copy</a> of the GNU General Public License<br/>
+    along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.<br/>
+	</div>
+</div>
+
+</body>
+</html>
+
