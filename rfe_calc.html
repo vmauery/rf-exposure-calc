@@ -75,6 +75,7 @@ div.popup-bg {
 	left: 0;
 	top: 0;
 	background-color: rgba(128,128,128,.5);
+	z-index: 100;
 }
 div.popup {
 	position: fixed;
@@ -84,6 +85,7 @@ div.popup {
 	padding: .5em 2em 2em 2em;
 	border: 1px solid black;
 	background: rgba(128,128,128,1);
+	z-index: 1000;
 }
   </style>
   <link type="text/css" href="css/ui.all.css" rel="stylesheet" />
@@ -120,29 +122,55 @@ function TransmitterBand(band, bandinfo) {
 		this.ce = bandinfo[2];
 		this.ue = bandinfo[3];
 	}
+	this.fini = function() {
+		return [this.band, [this.power, this.mod, this.ce, this.ue]];
+	}
 
 	/* member functions */
 	this.save = function() {
+		var band = $('#edit-tband-'+this.id+'-band').attr('value') || this.band;
+		var power = $('#edit-tband-'+this.id+'-power').attr('value') || this.power;
+		var mod = $('#edit-tband-'+this.id+'-mod').attr('value') || this.mod;
+		var ce = $('#edit-tband-'+this.id+'-ce').attr('value') || this.ce;
+		var ue = $('#edit-tband-'+this.id+'-ue').attr('value') || this.ue;
+		//alert('saving '+this.band+' tband\npower: '+power+'\nmodulation: '+mod+'\ncont exp: '+ce+'\nuncont exp: '+ue);
+		this.band = band;
+		this.power = power;
+		this.mod = mod;
+		this.ce = ce;
+		this.ue = ue;
+		save_transmitters();
+		show_transmitters();
+		show_connections();
+		show_results();
+		do_interactive();
+		post_render();
 	}
 
-	this.editor = function(index, row) {
+	this.editor = function() {
 		var ret = '';
 		if (this.band == null) {
-			this.band = bands[0];
+			this.band = Bands[0];
 			this.power = 0;
 			this.mod = modulation_duty_factor[0];
 			this.ce = 50;
 			this.ue = 50;
+			this.edit = false;
 			ret += "<h3>Add transmitter band</h3>";
 		} else {
 			ret += "<h3>Edit transmitter band</h3>";
+			this.edit = true;
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
-		ret += '<div class="edit-item"><label for="edit-xmitband-'+this.id+'-'+index+'">Band</label><select id="edit-xmitband-'+this.id+'-band-'+index+'">'+select_options(bands, this.band)+'</select/></div>';
-		ret += '<div class="edit-item"><label for="edit-xmitband-'+this.id+'-'+index+'">Power (W)</label><input type="textbox" id="edit-xmitband-'+this.id+'-power-'+index+'" value="'+this.power+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-xmitband-'+this.id+'-'+index+'">Modulation</label><select id="edit-xmitband-'+this.id+'-mod-'+index+'">'+select_options(modulation_duty_factor, this.mod)+'</select></div>';
-		ret += '<div class="edit-item"><label for="edit-xmitband-'+this.id+'-'+index+'">Controlled Exposure (%)</label><input type="textbox" id="edit-xmitband-'+this.id+'-ce-'+index+'" value="'+this.ce+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-xmitband-'+this.id+'-'+index+'">Uncontrolled Exposure (%)</label><input type="textbox" id="edit-xmitband-'+this.id+'-ue-'+index+'" value="'+this.ue+'"/></div>';
+		if (this.edit) {
+			ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label>'+this.band+'</div>';
+		} else {
+			ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label><select id="edit-tband-'+this.id+'-band">'+select_options(Bands, this.band)+'</select/></div>';
+		}
+		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-power">Power (W)</label><input type="textbox" id="edit-tband-'+this.id+'-power" value="'+this.power+'"/></div>';
+		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-mod">Modulation</label><select id="edit-tband-'+this.id+'-mod">'+select_options(modulation_duty_factor, this.mod)+'</select></div>';
+		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-ce">Controlled Exposure (%)</label><input type="textbox" id="edit-tband-'+this.id+'-ce" value="'+this.ce+'"/></div>';
+		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-ue">Uncontrolled Exposure (%)</label><input type="textbox" id="edit-tband-'+this.id+'-ue" value="'+this.ue+'"/></div>';
 		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
 		ret += '<input type="submit" name="save" value="Save"/></div>';
 		return ret;
@@ -151,17 +179,31 @@ function TransmitterBand(band, bandinfo) {
 }
 TransmitterBand.common_id = 0;
 
-function Transmitter(name, bands) {
+function Transmitter(init_data) {
 	/* intializer */
-	if (name == null) name = "";
-	this.id = Transmitter.common_id++;
-	this.name = name;
-	this.bands = {};
-	if (bands != null) {
+	this.init = function(init_data) {
+		if (init_data.length == 0) {
+			this.name = '';
+			bands = [];
+		} else {
+			this.name = init_data[0];
+			bands = init_data[1];
+		}
+		this.id = Transmitter.common_id++;
+		this.bands = {};
 		for (band in bands) {
 			var b = new TransmitterBand(band, bands[band]);
 			this.bands[band] = b;
 		}
+		return true;
+	};
+	this.fini = function() {
+		var bands = {};
+		for (band in this.bands) {
+			var v = this.bands[band].fini();
+			bands[v[0]] = v[1];
+		}
+		return [this.name, bands];
 	}
 	/* member functions */
 	this.save = function() {
@@ -179,14 +221,15 @@ function Transmitter(name, bands) {
 		
 	};
 	this.render = function() {
-		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-xmitband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-transmitter-'+this.id+'">Delete transmitter</a></div><h4>'+this.name+'</h4>\n<table width="100%">';
+		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-tband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-transmitter-'+this.id+'">Delete transmitter</a></div><h4>'+this.name+'</h4>\n<table width="100%">';
 		out += '<tr><th width="15%">Band</th><th width="15%">Power (W)</th><th width="30%">Modulation</th><th>Controlled<br/>Exposure (%)</th><th>Uncontrolled<br/>Exposure (%)</th><th></th></tr>\n';
 		for (var band in this.bands) {
-			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-xmitband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-xmitband-'+this.id+'">Delete</a></td></td></tr>\n';
+			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-tband-'+this.id+'">Delete</a></td></td></tr>\n';
 		}
 		out += '</table></div>';
 		return out;
 	};
+	return this.init(init_data);
 }
 Transmitter.common_id = 0;
 function transmitter_by_name(name) {
@@ -207,7 +250,7 @@ function Antenna(name, ant_data) {
 	this.id = Antenna.common_id++;
 
 	this.render = function() {
-		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-antennaband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-antenna-'+this.id+'">Delete antenna</a></div><h4>'+name+'</h4>\nDistances: Controlled exposure@'+this.cdx+'ft, Uncontrolled exposure@'+this.udx+'ft; Ground:'+this.ground+'<ul>';
+		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-antenna-'+this.id+'">Delete antenna</a></div><h4>'+name+'</h4>\nDistances: Controlled exposure@'+this.cdx+'ft, Uncontrolled exposure@'+this.udx+'ft; Ground:'+this.ground+'<ul>';
 		for (var band in this.bands) {
 			out += '<li>'+band+' @ '+this.bands[band]+' dBi</li>\n';
 		}
@@ -249,11 +292,13 @@ function Connection(conn_data) {
 Connection.common_id = 0;
 
 function popup_box(html) {
-		$('body').append('<div class="popup-bg"><div class="popup">'+html+'</div></div>');
-		$('.popup-bg').unbind('click').click(function(e) {
-			$(this).remove();
-		});
-	};
+	$('body').append('<div class="popup-bg"></div><div class="popup">'+html+'</div>');
+	$('.popup-bg').unbind('click').click(function(e) {
+		$(this).remove();
+		$('div.popup').remove();
+	});
+}
+
 function edit_a_thing(ele) {
 	var m = $(ele).attr('id').split('-');
 	var type = m[2];
@@ -263,16 +308,22 @@ function edit_a_thing(ele) {
 	switch (type) {
 		case "transmitter":
 			break;
-		case "xmitband":
+		case "tband":
 			thing = transmitters[id].bands[index];
 			break;
 		case "antenna": type = "Antenna"; break;
-		case "antennaband": type = "AntennaBand"; break;
+		case "aband": type = "AntennaBand"; break;
 		case "connection": type = "Connection"; break;
 	}
 	if (thing == null) return;
-	var form = thing.editor();
-	popup_box(form);
+	popup_box(thing.editor());
+	$('.popup').find(':submit[name=save]').click(function() {
+		thing.save();
+	});
+	$('.popup').find(':submit').click(function() {
+		$('.popup').remove();
+		$('.popup-bg').remove();
+	});
 }
 
 function post_render() {
@@ -294,7 +345,7 @@ var wires = {
 	'LL-600': {'160m':0.1, '80m':0.12, '60m':0.14, '40m':0.16, '30m':0.2, '20m':0.22, '17m':0.25, '15m':0.29, '12m':0.35, '10m':0.43, '6m':0.55, '2m':0.98, '220 MHz':1.19, '440 MHz':1.71, '900 MHz':2.5, },
 	'WM CQ 551': {'160m':0.02, '80m':0.04, '60m':0.06, '40m':0.08, '30m':0.08, '20m':0.10, '17m':0.12, '15m':0.12, '12m':0.13, '10m':0.14, '6m':0.15, '2m':0.35, },
 };
-var bands = {
+var Bands = {
 	'160m':[1800000,2000000],
 	'80m':[3500000,4000000],
 	'60m':[5330000,5405000],
@@ -342,10 +393,18 @@ var transmitters = {};
 var antennas = {};
 var connections = [];
 
+function save_transmitters() {
+	var xmtr_data = {}
+	for (var k in transmitters) {
+		var v = transmitters[k].fini();
+		xmtr_data[v[0]] = v[1];
+	}
+	setvar('transmitters', xmtr_data);
+}
 function load_transmitters(xmtr_data) {
 	var t = {}
 	for (var k in xmtr_data) {
-		var nt = new Transmitter(k, xmtr_data[k]);
+		var nt = new Transmitter([k, xmtr_data[k]]);
 		t[nt.id] = nt;
 	}
 	return t;
@@ -397,6 +456,7 @@ var lconnections = [
 }
 
 function show_transmitters() {
+	$('#transmitters').children().remove();
 	for (var t in transmitters) {
 		$('#transmitters').append(transmitters[t].render());
 	}
@@ -422,7 +482,7 @@ function show_results() {
 		for (var b in tm.bands) {
 			if (ant.bands[b] == null) continue;
 			var band = tm.bands[b];
-			var freq = bands[b][1];
+			var freq = Bands[b][1];
 			var line_loss = (con.length/100.0)*wires[con.wire][b];
 			if (wires[con.wire][b] == null) {
 				alert("Wire '"+con.wire+"' has no loss info at "+b);
