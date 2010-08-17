@@ -49,6 +49,7 @@ table td {
 }
 table.results {
 	border: 1px solid;
+	font-size: 80%;
 }
 table.results td, table.results th {
 	border: 1px solid gray;
@@ -140,11 +141,7 @@ function TransmitterBand(band, bandinfo) {
 		this.ce = ce;
 		this.ue = ue;
 		save_transmitters();
-		show_transmitters();
-		show_connections();
-		show_results();
-		do_interactive();
-		post_render();
+		refresh();
 	}
 
 	this.editor = function() {
@@ -455,6 +452,14 @@ var lconnections = [
 ];
 }
 
+function refresh() {
+	 show_transmitters();
+	 show_antennas();
+	 show_connections();
+	 show_results();
+	 do_interactive();
+	 post_render();
+}
 function show_transmitters() {
 	$('#transmitters').children().remove();
 	for (var t in transmitters) {
@@ -462,21 +467,24 @@ function show_transmitters() {
 	}
 }
 function show_antennas() {
+	$('#antennas').children().remove();
 	for (var a in antennas) {
 		$('#antennas').append(antennas[a].render());
 	}
 }
 function show_connections() {
+	$('#connections').children().remove();
 	for (var c in connections) {
 		$('#connections').append(connections[c].render());
 	}
 }
 function show_results() {
+	$('#results').children().remove();
 	for (var c in connections) {
 		var con = connections[c];
 		var tm = transmitters[con.transmitter];
 		var ant = antennas[con.antenna];
-		ctable = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ con.length+' ft of \''+con.wire+'\'</h3>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft';
+		ctable = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ con.length+' ft of \''+con.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
 		ctable += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
 		ctable += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
 		for (var b in tm.bands) {
@@ -609,12 +617,7 @@ function getvar(name) {
  transmitters = load_transmitters(getvar('transmitters'));
  antennas = load_antennas(getvar('antennas'));
  connections = load_connections(getvar('connections'));
- show_transmitters();
- show_antennas();
- show_connections();
- show_results();
- do_interactive();
- post_render();
+ refresh();
 
 }); })(jQuery);
  
