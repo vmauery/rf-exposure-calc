@@ -141,7 +141,10 @@ function TransmitterBand(band, bandinfo) {
 		this.ce = ce;
 		this.ue = ue;
 		save_transmitters();
-		refresh();
+	}
+
+	this.ask_delete = function() {
+		return confirm('Delete '+this.band+' band?');
 	}
 
 	this.editor = function() {
@@ -221,7 +224,7 @@ function Transmitter(init_data) {
 		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-tband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-transmitter-'+this.id+'">Delete transmitter</a></div><h4>'+this.name+'</h4>\n<table width="100%">';
 		out += '<tr><th width="15%">Band</th><th width="15%">Power (W)</th><th width="30%">Modulation</th><th>Controlled<br/>Exposure (%)</th><th>Uncontrolled<br/>Exposure (%)</th><th></th></tr>\n';
 		for (var band in this.bands) {
-			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-tband-'+this.id+'">Delete</a></td></td></tr>\n';
+			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-tband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
 		}
 		out += '</table></div>';
 		return out;
@@ -321,6 +324,28 @@ function edit_a_thing(ele) {
 		$('.popup').remove();
 		$('.popup-bg').remove();
 	});
+}
+
+function del_a_thing(ele) {
+	var m = $(ele).attr('id').split('-');
+	var type = m[2];
+	var id = parseInt(m[3]);
+	var index = m[4];
+	var thing = null;
+	switch (type) {
+		case "transmitter":
+			break;
+		case "tband":
+			if (transmitters[id].bands[index].ask_delete()) {
+				delete transmitters[id].bands[index];
+				save_transmitters();
+			}
+			break;
+		case "antenna": type = "Antenna"; break;
+		case "aband": type = "AntennaBand"; break;
+		case "connection": type = "Connection"; break;
+	}
+	refresh();
 }
 
 function post_render() {
