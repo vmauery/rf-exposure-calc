@@ -725,8 +725,11 @@ function do_interactive() {
 function setvar(name, value) {
 	window.localStorage['rfe.'+name] = JSON.stringify(value);
 }
-function getvar(name) {
-	return JSON.parse(window.localStorage['rfe.'+name]);
+function getvar(name, default_value) {
+	var v = window.localStorage['rfe.'+name];
+	if (v == null)
+		return default_value;
+	return JSON.parse(v);
 }
 
  $("#tabs").tabs();
@@ -734,9 +737,9 @@ function getvar(name) {
   alert('Your browser does not have local storage\nThis means that you will not be able to save\nany of your changes.');
  }
 
- transmitters = load_transmitters(getvar('transmitters'));
- antennas = load_antennas(getvar('antennas'));
- connections = load_connections(getvar('connections'));
+ transmitters = load_transmitters(getvar('transmitters', []));
+ antennas = load_antennas(getvar('antennas', []));
+ connections = load_connections(getvar('connections', []));
  refresh();
 
 }); })(jQuery);
