@@ -377,8 +377,10 @@ function edit_a_thing(ele) {
 	var id = parseInt(m[3]);
 	var index = m[4];
 	var thing = null;
+	console.log('edit_a_thing: type = '+type+', id = '+id+', index = '+index);
 	switch (type) {
 		case "xmtr":
+			thing = transmitters[id];
 			break;
 		case "tband":
 			thing = transmitters[id].bands[index];
