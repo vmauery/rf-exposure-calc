@@ -337,7 +337,7 @@ function edit_a_thing(ele) {
 	var index = m[4];
 	var thing = null;
 	switch (type) {
-		case "transmitter":
+		case "xmtr":
 			break;
 		case "tband":
 			thing = transmitters[id].bands[index];
@@ -364,7 +364,7 @@ function del_a_thing(ele) {
 	var index = m[4];
 	var thing = null;
 	switch (type) {
-		case "transmitter":
+		case "xmtr":
 			if (transmitters[id].ask_delete()) {
 				var name = transmitters[id].name;
 				var conns = connection_idx_from_transmitter(name);
