@@ -316,20 +316,84 @@ function antenna_by_name(name) {
 // conn_data is [transmitter, antenna, tuner_loss, wire, length, other_loss]
 function Connection(conn_data) {
 	this.init = function(conn_data) {
-		this.transmitter = transmitter_by_name(conn_data[0]);
-		this.antenna = antenna_by_name(conn_data[1]);
-		this.tuner_loss = conn_data[2];
-		this.wire = conn_data[3];
-		this.length = conn_data[4];
-		this.other_loss = conn_data[5];
-		this.name = conn_data[0] + ' <-> ' + conn_data[1];
+		if (conn_data == null) {
+			this.transmitter = null;
+			this.antenna = null;
+			this.tuner_loss = this.length = this.other_loss = 0;
+			this.wire = '';
+			this.name = '';
+		} else {
+			this.transmitter = transmitter_by_name(conn_data[0]);
+			this.antenna = antenna_by_name(conn_data[1]);
+			this.tuner_loss = conn_data[2];
+			this.wire = conn_data[3];
+			this.length = conn_data[4];
+			this.other_loss = conn_data[5];
+			this.name = conn_data[0] + ' <-> ' + conn_data[1];
+		}
+		this.id = Connection.common_id++;
+		return true;
 	};
 	this.fini = function() {
 		return [this.transmitter.name, this.antenna.name,
 				this.tuner_loss, this.wire, this.length, this.other_loss];
 	};
+	this.ask_delete = function() {
+		return confirm('Delete '+this.name+' connection?');
+	}
+
+	this.save = function() {
+		var xmtr = transmitters[parseInt($('#edit-conn-'+this.id+'-xmtr').attr('value'))];
+		var ant = antennas[parseInt($('#edit-conn-'+this.id+'-ant').attr('value'))];
+		var tloss = $('#edit-conn-'+this.id+'-tloss').attr('value') || this.tuner_loss;
+		var wire = $('#edit-conn-'+this.id+'-wire').attr('value') || this.wire;
+		var wlen = $('#edit-conn-'+this.id+'-wlen').attr('value') || this.length;
+		var other = $('#edit-conn-'+this.id+'-other').attr('value') || this.other_loss;
+		var name = xmtr.name + ' <-> ' + ant.name;
+		console.log('saving "'+name+'": tloss: '+tloss+', wire: '+wire+', length: '+wlen+', other: '+other);
+		if (this.transmitter != null) {
+			for (i in connections) {
+				if (connections[i].transmitter.id == this.transmitter.id &&
+					connections[i].antenna.id == this.antenna.id) {
+
+					delete connections[i];
+					break;
+				}
+			}
+		}
+		this.transmitter = xmtr;
+		this.antenna = ant;
+		this.tuner_loss = tloss;
+		this.wire = wire;
+		this.length = wlen;
+		this.other_loss = other;
+		connections.push(this);
+		save_connections();
+		refresh();
+	};
+	this.editor = function() {
+		var ret = '';
+		if (this.transmitter == null) {
+			ret += '<h3>Add a connection</h3>';
+		} else {
+			ret += '<h3>Edit "'+this.name+'" connection</h3>';
+		}
+		var tid = this.transmitter?this.transmitter.id:null;
+		var aid = this.antenna?this.antenna.id:null;
+		var wire_keys = array_keys(wires);
+		wire_keys = array_zip(wire_keys, wire_keys);
+		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-xmtr">Transmitter</label><select id="edit-conn-'+this.id+'-xmtr">'+select_options(this.xmtr_list(), tid)+'</select/></div>';
+		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-ant">Antenna</label><select id="edit-conn-'+this.id+'-ant">'+select_options(this.ant_list(), aid)+'</select/></div>';
+		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-tloss">Tuner losses (dB)</label><input type="textbox" id="edit-conn-'+this.id+'-tloss" value="'+this.tuner_loss+'"/></div>';
+		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-wire">Wire type</label><select id="edit-conn-'+this.id+'-wire">'+select_options(wire_keys, this.wire)+'</select></div>';
+		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-wlen">Wire length (ft)</label><input type="textbox" id="edit-conn-'+this.id+'-wlen" value="'+this.length+'"/></div>';
+		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-other">Other losses (dB)</label><input type="textbox" id="edit-conn-'+this.id+'-other" value="'+this.other_loss+'"/></div>';
+		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
+		ret += '<input type="submit" name="save" value="Save"/></div>';
+		return ret;
+	};
 	this.render = function() {
-		var out = '<div class="connection action-popup"><div class="action-box"></div><h4>\''+this.transmitter.name+'\' to \''+this.antenna.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h4>\n<ul>';
+		var out = '<div class="connection action-popup"><div class="action-box"><a class="link edit-a" id="edit-a-conn-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-conn-'+this.id+'">Delete</a></div><h4>\''+this.transmitter.name+'\' to \''+this.antenna.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h4>\n<ul>';
 		out += '<li>Transmitter: '+this.transmitter.name+'</li>\n';
 		out += '<li>Antenna: '+this.antenna.name+'</li>\n';
 		out += '<li>Tuner losses: '+this.tuner_loss+'</li>\n';
@@ -338,6 +402,20 @@ function Connection(conn_data) {
 		out += '<li>Other losses: '+this.other_loss+'</li>\n';
 		out += '</ul></div>';
 		return out;
+	};
+	this.xmtr_list = function() {
+		var ret = {};
+		for (var t in transmitters) {
+			ret[transmitters[t].id] = transmitters[t].name;
+		}
+		return ret;
+	};
+	this.ant_list = function() {
+		var ret = {};
+		for (var a in antennas) {
+			ret[antennas[a].id] = antennas[a].name;
+		}
+		return ret;
 	};
 	return this.init(conn_data);
 }
@@ -378,7 +456,9 @@ function add_a_thing(ele) {
 			break;
 		case "antenna": type = "Antenna"; break;
 		case "aband": type = "AntennaBand"; break;
-		case "connection": type = "Connection"; break;
+		case "connection":
+			thing = new Connection();
+			break;
 	}
 	if (thing == null) return;
 	popup_box(thing.editor());
@@ -407,7 +487,9 @@ function edit_a_thing(ele) {
 			break;
 		case "antenna": type = "Antenna"; break;
 		case "aband": type = "AntennaBand"; break;
-		case "connection": type = "Connection"; break;
+		case "conn":
+			thing = connections[id];
+			break;
 	}
 	if (thing == null) return;
 	popup_box(thing.editor());
@@ -448,7 +530,16 @@ function del_a_thing(ele) {
 			break;
 		case "antenna": type = "Antenna"; break;
 		case "aband": type = "AntennaBand"; break;
-		case "connection": type = "Connection"; break;
+		case "conn":
+			if (connections[id].ask_delete()) {
+				for (var c in connections) {
+					if (connections[c].id == id) {
+						console.log('deleting conn '+connections[c].name);
+						delete connections[c];
+					}
+				}
+			}
+			break;
 	}
 	refresh();
 }
