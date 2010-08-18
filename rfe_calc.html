@@ -101,6 +101,22 @@ div.popup {
 
 const cm_per_foot = 30.48;
 
+function array_keys(arr) {
+	var ret = [];
+	for (k in arr) {
+		ret.push(k);
+	}
+	return ret;
+}
+function array_zip(k, v) {
+	var ret = {};
+	for (kk in k) {
+		ret[k[kk]] = v[kk];
+	}
+	return ret;
+}
+// expects an array or associative array and uses
+// key/value pairs for options, index for arrays
 function select_options(list, selected) {
 	var opts = "";
 	for (var k in list) {
@@ -109,7 +125,7 @@ function select_options(list, selected) {
 		} else {
 			select = '';
 		}
-		opts += '<option value="'+k+'"'+select+'>'+k+'</option>';
+		opts += '<option value="'+k+'"'+select+'>'+list[k]+'</option>';
 	}
 	return opts;
 }
@@ -169,9 +185,13 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			ret += '<h3>Edit "'+this.xmtr.name+'" '+this.band+' band</h3>';
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
-		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label><select id="edit-tband-'+this.id+'-band">'+select_options(xmtr.bands_filter(this.band), this.band)+'</select/></div>';
+		var band_keys = array_keys(xmtr.bands_filter(this.band));
+		band_keys = array_zip(band_keys, band_keys);
+		var mod_keys = array_keys(modulation_duty_factor);
+		mod_keys = array_zip(mod_keys, mod_keys);
+		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label><select id="edit-tband-'+this.id+'-band">'+select_options(band_keys, this.band)+'</select/></div>';
 		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-power">Power (W)</label><input type="textbox" id="edit-tband-'+this.id+'-power" value="'+this.power+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-mod">Modulation</label><select id="edit-tband-'+this.id+'-mod">'+select_options(modulation_duty_factor, this.mod)+'</select></div>';
+		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-mod">Modulation</label><select id="edit-tband-'+this.id+'-mod">'+select_options(mod_keys, this.mod)+'</select></div>';
 		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-ce">Controlled Exposure (%)</label><input type="textbox" id="edit-tband-'+this.id+'-ce" value="'+this.ce+'"/></div>';
 		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-ue">Uncontrolled Exposure (%)</label><input type="textbox" id="edit-tband-'+this.id+'-ue" value="'+this.ue+'"/></div>';
 		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
