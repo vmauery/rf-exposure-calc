@@ -171,11 +171,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			this.edit = true;
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
-		if (this.edit) {
-			ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label>'+this.band+'</div>';
-		} else {
-			ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label><select id="edit-tband-'+this.id+'-band">'+select_options(Bands, this.band)+'</select/></div>';
-		}
+		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label><select id="edit-tband-'+this.id+'-band">'+select_options(xmtr.bands_filter(this.band), this.band)+'</select/></div>';
 		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-power">Power (W)</label><input type="textbox" id="edit-tband-'+this.id+'-power" value="'+this.power+'"/></div>';
 		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-mod">Modulation</label><select id="edit-tband-'+this.id+'-mod">'+select_options(modulation_duty_factor, this.mod)+'</select></div>';
 		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-ce">Controlled Exposure (%)</label><input type="textbox" id="edit-tband-'+this.id+'-ce" value="'+this.ce+'"/></div>';
@@ -214,6 +210,15 @@ function Transmitter(init_data) {
 		}
 		return [this.name, bands];
 	}
+	this.bands_filter = function(current_band) {
+		var bands = {};
+		for (band in Bands) {
+			if (band == current_band || !(band in this.bands)) {
+				bands[band] = Bands[band];
+			}
+		}
+		return bands;
+	};
 	/* member functions */
 	this.save = function() {
 		
