@@ -286,18 +286,23 @@ function antenna_by_name(name) {
 
 // conn_data is [transmitter, antenna, tuner_loss, wire, length, other_loss]
 function Connection(conn_data) {
-	this.transmitter = transmitter_by_name(conn_data[0]).id;
-	this.antenna = antenna_by_name(conn_data[1]).id;
-	this.tuner_loss = conn_data[2];
-	this.wire = conn_data[3];
-	this.length = conn_data[4];
-	this.other_loss = conn_data[5];
+	this.init = function(conn_data) {
+		this.transmitter = transmitter_by_name(conn_data[0]);
+		this.antenna = antenna_by_name(conn_data[1]);
+		this.tuner_loss = conn_data[2];
+		this.wire = conn_data[3];
+		this.length = conn_data[4];
+		this.other_loss = conn_data[5];
+		this.name = conn_data[0] + ' <-> ' + conn_data[1];
+	};
+	this.fini = function() {
+		return [this.transmitter.name, this.antenna.name,
+				this.tuner_loss, this.wire, this.length, this.other_loss];
+	};
 	this.render = function() {
-		var tm = transmitters[this.transmitter];
-		var ant = antennas[this.antenna];
-		var out = '<div class="connection action-popup"><div class="action-box"></div><h4>\''+tm.name+'\' to \''+ant.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h4>\n<ul>';
-		out += '<li>Transmitter: '+tm.name+'</li>\n';
-		out += '<li>Antenna: '+ant.name+'</li>\n';
+		var out = '<div class="connection action-popup"><div class="action-box"></div><h4>\''+this.transmitter.name+'\' to \''+this.antenna.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h4>\n<ul>';
+		out += '<li>Transmitter: '+this.transmitter.name+'</li>\n';
+		out += '<li>Antenna: '+this.antenna.name+'</li>\n';
 		out += '<li>Tuner losses: '+this.tuner_loss+'</li>\n';
 		out += '<li>Wire type: '+this.wire+'</li>\n';
 		out += '<li>Wire length: '+this.length+'</li>\n';
@@ -305,6 +310,7 @@ function Connection(conn_data) {
 		out += '</ul></div>';
 		return out;
 	};
+	return this.init(conn_data);
 }
 Connection.common_id = 0;
 function connection_idx_from_transmitter(name) {
@@ -560,8 +566,8 @@ function show_results() {
 	$('#results').children().remove();
 	for (var c in connections) {
 		var con = connections[c];
-		var tm = transmitters[con.transmitter];
-		var ant = antennas[con.antenna];
+		var tm = con.transmitter;
+		var ant = con.antenna;
 		ctable = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ con.length+' ft of \''+con.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
 		ctable += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
 		ctable += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
