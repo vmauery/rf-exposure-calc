@@ -569,10 +569,15 @@ function reset_data_store() {
 
 function refresh() {
 	console.log('refresh');
+try {
 	 show_transmitters();
+} catch (e) { console.log('transmitters failed to render'); }; try {
 	 show_antennas();
+} catch (e) { console.log('antennas failed to render'); }; try {
 	 show_connections();
+} catch (e) { console.log('connections failed to render'); }; try {
 	 show_results();
+} catch (e) { console.log('results failed to render'); }
 	 do_interactive();
 	 post_render();
 }
