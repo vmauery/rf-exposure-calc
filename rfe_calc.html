@@ -135,7 +135,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		var mod = $('#edit-tband-'+this.id+'-mod').attr('value') || this.mod;
 		var ce = $('#edit-tband-'+this.id+'-ce').attr('value') || this.ce;
 		var ue = $('#edit-tband-'+this.id+'-ue').attr('value') || this.ue;
-		//alert('saving '+this.band+' tband\npower: '+power+'\nmodulation: '+mod+'\ncont exp: '+ce+'\nuncont exp: '+ue);
+		console.log('saving '+this.band+' tband, power: '+power+', modulation: '+mod+', cont exp: '+ce+', uncont exp: '+ue);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
 		// while the assignment below saves us in the new (same?) band
