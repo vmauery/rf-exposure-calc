@@ -113,9 +113,10 @@ function select_options(list, selected) {
 	}
 	return opts;
 }
-function TransmitterBand(band, bandinfo) {
+function TransmitterBand(xmtr, band, bandinfo) {
 	/* initializer */
 	this.id = TransmitterBand.common_id++;
+	this.xmtr = xmtr;
 	if ( band != null && bandinfo != null) {
 		this.band = band;
 		this.power = bandinfo[0];
@@ -156,9 +157,9 @@ function TransmitterBand(band, bandinfo) {
 			this.ce = 50;
 			this.ue = 50;
 			this.edit = false;
-			ret += "<h3>Add transmitter band</h3>";
+			ret += '<h3>Add "'+this.xmtr.name+'" band</h3>';
 		} else {
-			ret += "<h3>Edit transmitter band</h3>";
+			ret += '<h3>Edit "'+this.xmtr.name+'" '+this.band+' band</h3>';
 			this.edit = true;
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
@@ -192,7 +193,7 @@ function Transmitter(init_data) {
 		this.id = Transmitter.common_id++;
 		this.bands = {};
 		for (band in bands) {
-			var b = new TransmitterBand(band, bands[band]);
+			var b = new TransmitterBand(this, band, bands[band]);
 			this.bands[band] = b;
 		}
 		return true;
