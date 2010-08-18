@@ -335,6 +335,32 @@ function popup_box(html) {
 	});
 }
 
+function add_a_thing(ele) {
+	var m = $(ele).attr('id').split('-');
+	var type = m[2];
+	var id = parseInt(m[3]);
+	var thing = null;
+	switch (type) {
+		case "xmtr":
+			break;
+		case "tband":
+			thing = new TransmitterBand(transmitters[id]);
+			break;
+		case "antenna": type = "Antenna"; break;
+		case "aband": type = "AntennaBand"; break;
+		case "connection": type = "Connection"; break;
+	}
+	if (thing == null) return;
+	popup_box(thing.editor());
+	$('.popup').find(':submit[name=save]').click(function() {
+		thing.save();
+	});
+	$('.popup').find(':submit').click(function() {
+		$('.popup').remove();
+		$('.popup-bg').remove();
+	});
+}
+
 function edit_a_thing(ele) {
 	var m = $(ele).attr('id').split('-');
 	var type = m[2];
