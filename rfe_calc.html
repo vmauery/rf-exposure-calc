@@ -431,6 +431,10 @@ function post_render() {
 	$(".link").filter(".edit-a").unbind('click').click(function() {
 			edit_a_thing(this);
 	});
+	$(".link").filter("#reset-data").unbind('click').click(function() {
+		console.log('resetting data');
+		reset_data_store();
+	});
 }
 
 var wires = {
@@ -530,31 +534,37 @@ function load_connections(conn_data) {
 	return c;
 }
 
-var reset_data_store = false;
-if (reset_data_store) {
-var ltransmitters = {
-	// Transmitter(name, bands)
-	//band info is [power, duty cycle, win_c, win_u]
-	'IC-7000':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30], '6m':[100, 'FM', 50, 50], '2m':[50, 'FM', 50, 50], '440 MHz':[30, 'FM', 50, 50]},
-	'Elecraft K3/100':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30]},
-    'IC-92AD':{'2m':[5, 'FM', 50, 50], '440 MHz':[5, 'FM', 50, 50]},
-};
-var lantennas = {
-	// Antenna(name, bands, cdx, udx, ground)
-	'Center-fed Zepp':[{'80m':1.9, '60m':2.0, '40m':2.5, '30m':3.1, '20m':3.1, '17m':3.1, '15m':3.1, '12m':3.2, '10m':3.2,}, 18, 16, true],
-	'6/2/440 collinear':[{'6m':3.07, '2m':8.3, '440 MHz':11.7}, 6, 15, true],
-	'2/440 collinear':[{'2m':3.76, '440 MHz':4.32}, 1, 50, true],
-	'2/440 dipole':[{'2m':2.2, '440 MHz':3.02}, 1, 50, true],
-};
-var lconnections = [
-	// Connection(transmitter, antenna, tuner_loss, wire, length, other_loss)
-	['Elecraft K3/100', 'Center-fed Zepp', 0.1, 'LL-400', 150, 0.2],
-	['IC-7000', 'Center-fed Zepp', 0.1, 'RG-8X', 150, 0.2],
-	['IC-7000', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
-	['IC-92AD', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
-	['IC-92AD', '2/440 collinear', 0.0, 'LL-400', 30.0, 0.0],
-	['IC-92AD', '2/440 dipole', 0.0, 'LL-400', 30.0, 0.0],
-];
+function reset_data_store() {
+	var ltransmitters = {
+		// Transmitter(name, bands)
+		//band info is [power, duty cycle, win_c, win_u]
+		'IC-7000':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30], '6m':[100, 'FM', 50, 50], '2m':[50, 'FM', 50, 50], '440 MHz':[30, 'FM', 50, 50]},
+		'Elecraft K3/100':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30]},
+		'IC-92AD':{'2m':[5, 'FM', 50, 50], '440 MHz':[5, 'FM', 50, 50]},
+	};
+	var lantennas = {
+		// Antenna(name, bands, cdx, udx, ground)
+		'Center-fed Zepp':[{'80m':1.9, '60m':2.0, '40m':2.5, '30m':3.1, '20m':3.1, '17m':3.1, '15m':3.1, '12m':3.2, '10m':3.2,}, 18, 16, true],
+		'6/2/440 collinear':[{'6m':3.07, '2m':8.3, '440 MHz':11.7}, 6, 15, true],
+		'2/440 collinear':[{'2m':3.76, '440 MHz':4.32}, 1, 50, true],
+		'2/440 dipole':[{'2m':2.2, '440 MHz':3.02}, 1, 50, true],
+	};
+	var lconnections = [
+		// Connection(transmitter, antenna, tuner_loss, wire, length, other_loss)
+		['Elecraft K3/100', 'Center-fed Zepp', 0.1, 'LL-400', 150, 0.2],
+		['IC-7000', 'Center-fed Zepp', 0.1, 'RG-8X', 150, 0.2],
+		['IC-7000', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
+		['IC-92AD', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
+		['IC-92AD', '2/440 collinear', 0.0, 'LL-400', 30.0, 0.0],
+		['IC-92AD', '2/440 dipole', 0.0, 'LL-400', 30.0, 0.0],
+		];
+	setvar('antennas', lantennas);
+	setvar('transmitters', ltransmitters);
+	setvar('connections', lconnections);
+	transmitters = load_transmitters(getvar('transmitters'));
+	antennas = load_antennas(getvar('antennas'));
+	connections = load_connections(getvar('connections'));
+	refresh();
 }
 
 function refresh() {
@@ -719,11 +729,6 @@ function getvar(name) {
   alert('Your browser does not have local storage\nThis means that you will not be able to save\nany of your changes.');
  }
 
- if (reset_data_store) {
-	setvar('antennas', lantennas);
-	setvar('transmitters', ltransmitters);
-	setvar('connections', lconnections);
- }
  transmitters = load_transmitters(getvar('transmitters'));
  antennas = load_antennas(getvar('antennas'));
  connections = load_connections(getvar('connections'));
@@ -762,6 +767,7 @@ function getvar(name) {
 		</textarea>
     </div>
 	<div id="help">
+	<p><a class="link" id="reset-data">Reset data</a></p>
 	<h2>Transmitters</h2>
 	<h2>Antennas</h2>
 	<h2>Connections</h2>
