@@ -526,6 +526,7 @@ var lconnections = [
 }
 
 function refresh() {
+	console.log('refresh');
 	 show_transmitters();
 	 show_antennas();
 	 show_connections();
@@ -534,24 +535,28 @@ function refresh() {
 	 post_render();
 }
 function show_transmitters() {
+	console.log('show_transmitters');
 	$('#transmitters').children().remove();
 	for (var t in transmitters) {
 		$('#transmitters').append(transmitters[t].render());
 	}
 }
 function show_antennas() {
+	console.log('show_antennas');
 	$('#antennas').children().remove();
 	for (var a in antennas) {
 		$('#antennas').append(antennas[a].render());
 	}
 }
 function show_connections() {
+	console.log('show_connections');
 	$('#connections').children().remove();
 	for (var c in connections) {
 		$('#connections').append(connections[c].render());
 	}
 }
 function show_results() {
+	console.log('show_results');
 	$('#results').children().remove();
 	for (var c in connections) {
 		var con = connections[c];
