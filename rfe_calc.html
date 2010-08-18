@@ -228,11 +228,9 @@ function Transmitter(init_data) {
 		
 	};
 	this.editor = function() {
-		var ret = '<label for="transmitter-'+this.id+'">Name</label><input type="textbox" id="transmitter-'+this.id+'" name="name" value="'+this.name+'"/>';
-		var i;
-		for (i=0;i<this.bands.length;i++) {
-			ret += this.child_editor(i, this.bands[i]);
-		}
+		var ret = '<div class="edit-item"><label for="xmtr-'+this.id+'">Name</label><input type="textbox" id="xmtr-'+this.id+'" name="name" value="'+this.name+'"/></div>';
+		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
+		ret += '<input type="submit" name="save" value="Save"/></div>';
 		return ret;
 	};
 	this.submit = function() {
