@@ -584,6 +584,8 @@ try {
 function show_transmitters() {
 	console.log('show_transmitters');
 	$('#transmitters').children().remove();
+	$('#transmitters').append(
+		'<a class="link add-a" id="add-a-xmtr">Add a transmitter</a>\n');
 	for (var t in transmitters) {
 		$('#transmitters').append(transmitters[t].render());
 	}
@@ -591,6 +593,8 @@ function show_transmitters() {
 function show_antennas() {
 	console.log('show_antennas');
 	$('#antennas').children().remove();
+	$('#antennas').append(
+		'<a class="link add-a" id="add-a-antenna">Add an antenna</a>');
 	for (var a in antennas) {
 		$('#antennas').append(antennas[a].render());
 	}
@@ -598,6 +602,8 @@ function show_antennas() {
 function show_connections() {
 	console.log('show_connections');
 	$('#connections').children().remove();
+	$('#connections').append(
+		'<a class="link add-a" id="add-a-connection">Add a connection</a>');
 	for (var c in connections) {
 		$('#connections').append(connections[c].render());
 	}
@@ -758,13 +764,10 @@ function getvar(name, default_value) {
 		<li><a href="#help"><span>Help</span></a></li>
     </ul>
     <div id="transmitters">
-	<a class="link add-a" id="add-a-transmitter">Add a transmitter</a>
     </div>
     <div id="antennas">
-	<a class="link add-a" id="add-a-antenna">Add an antenna</a>
     </div>
     <div id="connections">
-	<a class="link add-a" id="add-a-connection">Add a connection</a>
     </div>
     <div id="results">
     </div>
