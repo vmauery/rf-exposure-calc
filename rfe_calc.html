@@ -239,7 +239,8 @@ function Transmitter(init_data) {
 	this.render = function() {
 		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-tband-'+this.id+'">Add a band</a> | <a class="link edit-a" id="edit-a-xmtr-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-xmtr-'+this.id+'">Delete</a></div><h4>'+this.name+'</h4>\n<table width="100%">';
 		out += '<tr><th width="15%">Band</th><th width="15%">Power (W)</th><th width="30%">Modulation</th><th>Controlled<br/>Exposure (%)</th><th>Uncontrolled<br/>Exposure (%)</th><th></th></tr>\n';
-		for (var band in this.bands) {
+		for (var band in Bands) {
+			if (!(band in this.bands)) continue;
 			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-tband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
 		}
 		out += '</table></div>';
@@ -559,8 +560,8 @@ function show_results() {
 		ctable = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ con.length+' ft of \''+con.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
 		ctable += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
 		ctable += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
-		for (var b in tm.bands) {
-			if (ant.bands[b] == null) continue;
+		for (var b in Bands) {
+			if (!(b in tm.bands) || ant.bands[b] == null) continue;
 			var band = tm.bands[b];
 			var freq = Bands[b][1];
 			var line_loss = (con.length/100.0)*wires[con.wire][b];
