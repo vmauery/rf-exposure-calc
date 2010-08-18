@@ -164,11 +164,9 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			this.mod = modulation_duty_factor[0];
 			this.ce = 50;
 			this.ue = 50;
-			this.edit = false;
 			ret += '<h3>Add "'+this.xmtr.name+'" band</h3>';
 		} else {
 			ret += '<h3>Edit "'+this.xmtr.name+'" '+this.band+' band</h3>';
-			this.edit = true;
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
 		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label><select id="edit-tband-'+this.id+'-band">'+select_options(xmtr.bands_filter(this.band), this.band)+'</select/></div>';
@@ -187,7 +185,7 @@ TransmitterBand.common_id = 0;
 function Transmitter(init_data) {
 	/* intializer */
 	this.init = function(init_data) {
-		if (init_data.length == 0) {
+		if (init_data == null || init_data.length == 0) {
 			this.name = '';
 			bands = [];
 		} else {
@@ -225,10 +223,21 @@ function Transmitter(init_data) {
 	};
 	/* member functions */
 	this.save = function() {
-		
+		var name = $('#edit-xmtr-'+this.id+'-name').attr('value') || this.name;
+		this.name = name;
+		console.log('saving '+this.name);
+		transmitters[this.id] = this;
+		save_transmitters();
+		refresh();
 	};
 	this.editor = function() {
-		var ret = '<div class="edit-item"><label for="xmtr-'+this.id+'">Name</label><input type="textbox" id="xmtr-'+this.id+'" name="name" value="'+this.name+'"/></div>';
+		var ret = '';
+		if (this.name == "") {
+			ret += '<h3>Add a transmitter</h3>';
+		} else {
+			ret += '<h3>Edit "'+this.name+'" transmitter</h3>';
+		}
+		ret += '<div class="edit-item"><label for="edit-xmtr-'+this.id+'-name">Name</label><input type="textbox" id="edit-xmtr-'+this.id+'-name" name="name" value="'+this.name+'"/></div>';
 		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
 		ret += '<input type="submit" name="save" value="Save"/></div>';
 		return ret;
@@ -342,6 +351,7 @@ function add_a_thing(ele) {
 	var thing = null;
 	switch (type) {
 		case "xmtr":
+			thing = new Transmitter();
 			break;
 		case "tband":
 			thing = new TransmitterBand(transmitters[id]);
