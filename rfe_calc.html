@@ -210,6 +210,10 @@ function Transmitter(init_data) {
 		}
 		return [this.name, bands];
 	}
+	this.ask_delete = function() {
+		return confirm('Delete transmitter "'+this.name+'"?');
+	}
+
 	this.bands_filter = function(current_band) {
 		var bands = {};
 		for (band in Bands) {
@@ -235,7 +239,7 @@ function Transmitter(init_data) {
 		
 	};
 	this.render = function() {
-		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-tband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-transmitter-'+this.id+'">Delete transmitter</a></div><h4>'+this.name+'</h4>\n<table width="100%">';
+		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-tband-'+this.id+'">Add a band</a> | <a class="link edit-a" id="edit-a-xmtr-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-xmtr-'+this.id+'">Delete</a></div><h4>'+this.name+'</h4>\n<table width="100%">';
 		out += '<tr><th width="15%">Band</th><th width="15%">Power (W)</th><th width="30%">Modulation</th><th>Controlled<br/>Exposure (%)</th><th>Uncontrolled<br/>Exposure (%)</th><th></th></tr>\n';
 		for (var band in this.bands) {
 			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-tband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
@@ -304,6 +308,19 @@ function Connection(conn_data) {
 	};
 }
 Connection.common_id = 0;
+function connection_idx_from_transmitter(name) {
+	conns = [];
+	for (var c in connections) {
+		t = connections[c].transmitter;
+		console.log('compare "'+name+'" to "'+t.name+'"');
+		if (t.name == name) {
+			console.log('found connection: '+connections[c].name);
+			conns.push(c);
+		}
+	}
+	return conns;
+}
+
 
 function popup_box(html) {
 	$('body').append('<div class="popup-bg"></div><div class="popup">'+html+'</div>');
@@ -348,6 +365,17 @@ function del_a_thing(ele) {
 	var thing = null;
 	switch (type) {
 		case "transmitter":
+			if (transmitters[id].ask_delete()) {
+				var name = transmitters[id].name;
+				var conns = connection_idx_from_transmitter(name);
+				for (var c in conns) {
+					console.log('deleting conn '+connections[conns[c]].name);
+					delete connections[conns[c]];
+				}
+				delete transmitters[id];
+				save_transmitters();
+				save_connections();
+			}
 			break;
 		case "tband":
 			if (transmitters[id].bands[index].ask_delete()) {
@@ -456,6 +484,13 @@ function load_antennas(ant_data) {
 // connections are the only special case... here we need to look
 // up the transmitter and antenna by name to get the ids to go
 // in the object
+function save_connections() {
+	var conn_data = new Array();
+	for (var k in connections) {
+		conn_data.push(connections[k].fini());
+	}
+	setvar('connections', conn_data);
+}
 function load_connections(conn_data) {
 	var c = [];
 	for (var k in conn_data) {
