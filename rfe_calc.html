@@ -190,7 +190,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			ret += '<h3>Edit "'+this.xmtr.name+'" '+this.band+' band</h3>';
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
-		var band_keys = array_keys(xmtr.bands_filter(this.band));
+		var band_keys = array_keys(bands_filter(this.xmtr.bands, this.band));
 		band_keys = array_zip(band_keys, band_keys);
 		var mod_keys = array_keys(modulation_duty_factor);
 		mod_keys = array_zip(mod_keys, mod_keys);
@@ -238,16 +238,6 @@ function Transmitter(init_data) {
 	/* member functions */
 	this.ask_delete = function() {
 		return confirm('Delete transmitter "'+this.name+'"?');
-	}
-
-	this.bands_filter = function(current_band) {
-		var bands = {};
-		for (band in Bands) {
-			if (band == current_band || !(band in this.bands)) {
-				bands[band] = Bands[band];
-			}
-		}
-		return bands;
 	};
 
 	this.save = function() {
@@ -618,6 +608,16 @@ var Bands = {
 	'241 GHz':[241000000000,250000000000],
 	'275 GHz':[275000000000,300000000000],
 };
+function bands_filter(bands, current_band) {
+	var ret = {};
+	for (band in Bands) {
+		if (band == current_band || !(band in bands)) {
+			ret[band] = Bands[band];
+		}
+	}
+	return ret;
+}
+
 
 var modulation_duty_factor = {
 	'CW': 40,
