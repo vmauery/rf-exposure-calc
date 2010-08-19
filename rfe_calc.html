@@ -642,44 +642,63 @@ function connection_idx_from_antenna(name) {
 	return conns;
 }
 
-function popup_box(html) {
-	$('body').append('<div class="popup-bg"></div><div class="popup">'+html+'</div>');
-	$('.popup-bg').unbind('click').click(function(e) {
+function popup_box(type, id, html) {
+	$('body').append('<div class="popup-bg" id="popup-bg-'+type+'-'+id+'"></div><div class="popup" id="popup-'+type+'-'+id+'">'+html+'</div>');
+	$('#popup-bg-'+type+'-'+id).unbind('click').click(function(e) {
 		$(this).remove();
-		$('div.popup').remove();
+		$('#popup-'+type+'-'+id).remove();
 	});
 }
 
-function add_a_thing(ele) {
-	var m = $(ele).attr('id').split('-');
-	var type = m[2];
-	var id = parseInt(m[3]);
-	var thing = null;
+function add_a_thing(ele, next) {
+	var type;
+	var id;
+	var thing;
+	var subid;
+	if (next == null) {
+		var m = $(ele).attr('id').split('-');
+		type = m[2];
+		id = parseInt(m[3]);
+		thing = null;
+		subid = 0;
+	} else {
+		console.log('add a thing next: '+next);
+		type = next[0];
+		id = next[1];
+	}
 	switch (type) {
 		case "xmtr":
 			thing = new Transmitter();
+			next = [ 'tband', thing.id ];
 			break;
 		case "tband":
 			thing = new TransmitterBand(transmitters[id]);
+			subid = thing.id;
 			break;
 		case "antenna":
 			thing = new Antenna();
+			next = [ 'aband', thing.id ];
 			break;
 		case "aband":
 			thing = new AntennaBand(antennas[id]);
+			subid = thing.id;
 			break;
 		case "connection":
 			thing = new Connection();
 			break;
 	}
 	if (thing == null) return;
-	popup_box(thing.editor());
-	$('.popup').find(':submit[name=save]').click(function() {
+	var pid = id+'-'+subid;
+	popup_box(type, pid, thing.editor());
+	$('#popup-'+type+'-'+pid).find(':submit[name=save]').click(function() {
 		thing.save();
+		if (next != null) {
+			add_a_thing(null, next);
+		}
 	});
-	$('.popup').find(':submit').click(function() {
-		$('.popup').remove();
-		$('.popup-bg').remove();
+	$('#popup-'+type+'-'+pid).find(':submit').click(function() {
+		$('#popup-'+type+'-'+pid).remove();
+		$('#popup-bg-'+type+'-'+pid).remove();
 	});
 }
 
@@ -708,13 +727,13 @@ function edit_a_thing(ele) {
 			break;
 	}
 	if (thing == null) return;
-	popup_box(thing.editor());
-	$('.popup').find(':submit[name=save]').click(function() {
+	popup_box(type, id, thing.editor());
+	$('#popup-'+type+'-'+id).find(':submit[name=save]').click(function() {
 		thing.save();
 	});
-	$('.popup').find(':submit').click(function() {
-		$('.popup').remove();
-		$('.popup-bg').remove();
+	$('#popup-'+type+'-'+id).find(':submit').click(function() {
+		$('#popup-'+type+'-'+id).remove();
+		$('#popup-bg-'+type+'-'+id).remove();
 	});
 }
 
