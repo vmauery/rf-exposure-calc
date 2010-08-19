@@ -970,7 +970,7 @@ function show_results() {
 			var freq = Bands[b][1];
 			var line_loss = (con.length/100.0)*wires[con.wire][b];
 			if (wires[con.wire][b] == null) {
-				alert("Wire '"+con.wire+"' has no loss info at "+b);
+				console.error("Wire '"+con.wire+"' has no loss info at "+b);
 				line_loss = 0;
 			}
 			var tloss = con.tuner_loss + con.other_loss + line_loss;
@@ -1067,7 +1067,7 @@ function calc_mpe(frequency, controlled) {
 		return 1.0;
 	}  /**  Below 100 GHz  **/
 	else {  /**  Frequency too high  **/
-		alert("The FCC does not have exposure limits above 100 GHz.\nPlease try again.");
+		console.error("The FCC does not have exposure limits above 100 GHz.  Please try again.");
 		return;
 	}  /**  Frequency too high  **/
 }
@@ -1086,6 +1086,7 @@ function calc_mpe(frequency, controlled) {
   @dxm: minimum distance to compliance in cm
 */
 function calc_exposure(controlled, watts, tdc, winave, tloss, gain, freq, dx, ground) {
+	//console.log('calc_exposure('+controlled+', '+watts+', '+tdc+', '+winave+', '+tloss+', '+gain+', '+freq+', '+dx+', '+ground);
 	var power = tdc * tloss * watts * 1000 * winave * gain;
 	var rfe, mpe, mdx;
 	if ((power > 0) && (dx > 0)) {
@@ -1097,7 +1098,7 @@ function calc_exposure(controlled, watts, tdc, winave, tloss, gain, freq, dx, gr
 		mpe = calc_mpe(freq, controlled);
 		mdx = Math.sqrt((gf * power)/(mpe * Math.PI));
 	}
-	//alert("{rfe:"+rfe+", mpe:"+mpe+", mdx:"+mdx+"}");
+	//console.log("{rfe:"+rfe+", mpe:"+mpe+", mdx:"+mdx+"}");
 	return {rfe:rfe, mpe:mpe, mdx:mdx};
 }
 function hide_elements(ele) {
