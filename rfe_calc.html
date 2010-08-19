@@ -321,7 +321,7 @@ function AntennaBand(ant, band, gain) {
 	/* member functions */
 	this.save = function() {
 		var band = $('#edit-aband-'+this.id+'-band').attr('value');
-		var gain = $('#edit-aband-'+this.id+'-gain').attr('value');
+		var gain = parseFloat($('#edit-aband-'+this.id+'-gain').attr('value'));
 		console.log('saving '+band+' aband, gain: '+gain);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
@@ -487,29 +487,35 @@ function Connection(conn_data) {
 	this.save = function() {
 		var xmtr = transmitters[parseInt($('#edit-conn-'+this.id+'-xmtr').attr('value'))];
 		var ant = antennas[parseInt($('#edit-conn-'+this.id+'-ant').attr('value'))];
-		var tloss = $('#edit-conn-'+this.id+'-tloss').attr('value') || this.tuner_loss;
-		var wire = $('#edit-conn-'+this.id+'-wire').attr('value') || this.wire;
-		var wlen = $('#edit-conn-'+this.id+'-wlen').attr('value') || this.length;
-		var other = $('#edit-conn-'+this.id+'-other').attr('value') || this.other_loss;
+		var tloss = parseFloat($('#edit-conn-'+this.id+'-tloss').attr('value'));
+		var wire = $('#edit-conn-'+this.id+'-wire').attr('value');
+		var wlen = parseFloat($('#edit-conn-'+this.id+'-wlen').attr('value'));
+		var other = parseFloat($('#edit-conn-'+this.id+'-other').attr('value'));
 		var name = xmtr.name + ' <-> ' + ant.name;
 		console.log('saving "'+name+'": tloss: '+tloss+', wire: '+wire+', length: '+wlen+', other: '+other);
-		if (this.transmitter != null) {
-			for (i in connections) {
-				if (connections[i].transmitter.id == this.transmitter.id &&
-					connections[i].antenna.id == this.antenna.id) {
+		tt = this.transmitter;
+		tid = this.transmitter?this.transmitter.id:0;
+		aid = this.antenna?this.antenna.id:0;
 
-					delete connections[i];
-					break;
-				}
-			}
-		}
 		this.transmitter = xmtr;
 		this.antenna = ant;
 		this.tuner_loss = tloss;
 		this.wire = wire;
 		this.length = wlen;
 		this.other_loss = other;
-		connections.push(this);
+
+		if (tt != null) {
+			for (i in connections) {
+				if (connections[i].transmitter.id == tid &&
+					connections[i].antenna.id == aid) {
+
+					connections[i] = this;
+					break;
+				}
+			}
+		} else {
+			connections.push(this);
+		}
 		save_connections();
 		refresh();
 	};
