@@ -795,13 +795,16 @@ var transmitters = {};
 var antennas = {};
 var connections = [];
 
-function save_transmitters() {
+function serialize_transmitters() {
 	var xmtr_data = {}
 	for (var k in transmitters) {
 		var v = transmitters[k].fini();
 		xmtr_data[v[0]] = v[1];
 	}
-	setvar('transmitters', xmtr_data);
+	return xmtr_data;
+}
+function save_transmitters() {
+	setvar('transmitters', serialize_transmitters());
 }
 function load_transmitters(xmtr_data) {
 	var t = {}
@@ -830,15 +833,15 @@ function load_antennas(ant_data) {
 	}
 	return a;
 }
-// connections are the only special case... here we need to look
-// up the transmitter and antenna by name to get the ids to go
-// in the object
-function save_connections() {
+function serialize_connections() {
 	var conn_data = new Array();
 	for (var k in connections) {
 		conn_data.push(connections[k].fini());
 	}
-	setvar('connections', conn_data);
+	return conn_data;
+}
+function save_connections() {
+	setvar('connections', serialize_connections());
 }
 function load_connections(conn_data) {
 	var c = [];
@@ -879,21 +882,34 @@ function reset_data_store() {
 	antennas = load_antennas(getvar('antennas'));
 	connections = load_connections(getvar('connections'));
 	refresh();
+	window.location.reload(true);
 }
 
-function refresh() {
-	console.log('refresh');
-try {
-	 show_transmitters();
-} catch (e) { console.log('transmitters failed to render'); }; try {
-	 show_antennas();
-} catch (e) { console.log('antennas failed to render'); }; try {
-	 show_connections();
-} catch (e) { console.log('connections failed to render'); }; try {
-	 show_results();
-} catch (e) { console.log('results failed to render'); }
-	 do_interactive();
-	 post_render();
+function page_init() {
+	$('#eximport-import').unbind('click').click(import_data);
+	$('#eximport-export').unbind('click').click(export_data);
+	$('#eximport-reset').unbind('click').click(reset_data);
+}
+
+function log_err(msg, e) {
+	console.error(msg + ': '+e.stack);
+}
+
+function refresh(mask_errors) {
+	if (mask_errors == null) mask_errors = true;
+	var error = null;
+	try {
+		show_transmitters();
+	} catch (e) { log_err('transmitters failed to render: ', e); error = e; }; try {
+		show_antennas();
+	} catch (e) { log_err('antennas failed to render: ', e); error = e; }; try {
+		show_connections();
+	} catch (e) { log_err('connections failed to render: ', e); error = e; }; try {
+		show_results();
+	} catch (e) { log_err('results failed to render: ', e); error = e; }
+	if (error != null && !mask_errors) throw error;
+	do_interactive();
+	post_render();
 }
 function show_transmitters() {
 	console.log('show_transmitters');
@@ -969,9 +985,45 @@ function show_results() {
 	}
 // | transmitter | power | band | tuner losses | line losses | other losses | rfe | mpe | mdx | ok
 }
+function reset_data() {
+	if (!confirm('This cannot be undone.\nDelete all transmitter/antenna/connection data?'))
+		return;
+	delvar('antennas');
+	delvar('connections');
+	delvar('transmitters');
+	delete transmitters;
+	delete antennas;
+	delete connections;
+	window.location.reload(true);
+}
 function export_data() {
+	var data = {
+		'antennas': getvar('antennas', {}),
+		'connections': getvar('connections', []),
+		'transmitters': getvar('transmitters', {}),
+	};
+	$('#eximport-data').val(JSON.stringify(data));
 }
 function import_data() {
+	if (!confirm('This cannot be undone.\nReplace all transmitter/antenna/connection data?'))
+		return;
+	try {
+		var data = $('#eximport-data').val();
+		console.log('import:\n'+data);
+		data = JSON.parse(data);
+		transmitters = load_transmitters(data['transmitters']);
+		antennas = load_antennas(data['antennas']);
+		connections = load_connections(data['connections']);
+		refresh(false);
+		setvar('antennas', data['antennas']);
+		setvar('connections', data['connections']);
+		setvar('transmitters', data['transmitters']);
+		window.location.reload(true);
+	} catch (e) {
+		log_err('failed to import: ', e);
+		alert('Imported data was not in correct format');
+		window.location.reload(true);
+	}
 }
 function calc_mpe(frequency, controlled) {
 	frequency /= 1000000;
@@ -1042,6 +1094,9 @@ function do_interactive() {
 		$(this).find('.action-box').hide();
 	});
 }
+function delvar(name) {
+	window.localStorage.removeItem('rfe.'+name);
+}
 function setvar(name, value) {
 	window.localStorage['rfe.'+name] = JSON.stringify(value);
 }
@@ -1060,6 +1115,7 @@ function getvar(name, default_value) {
  transmitters = load_transmitters(getvar('transmitters', []));
  antennas = load_antennas(getvar('antennas', []));
  connections = load_connections(getvar('connections', []));
+ page_init();
  refresh();
 
 }); })(jQuery);
@@ -1086,10 +1142,12 @@ function getvar(name, default_value) {
     <div id="results">
     </div>
     <div id="eximport">
-        <textarea rows="25" cols=100">
-        Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
-        Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
-		</textarea>
+		<div class="edit-items">
+		<input id="eximport-import" type="button" name="import" value="Import"/>
+		<input id="eximport-export" type="button" name="export" value="Export"/>
+		<input id="eximport-reset" type="button" name="reset" value="Reset all data"/>
+		</div>
+        <textarea id="eximport-data" rows="20" cols=80"></textarea>
     </div>
 	<div id="help">
 	<p><a class="link" id="reset-data">Reset data</a></p>
