@@ -131,15 +131,19 @@ function select_options(list, selected) {
 }
 function TransmitterBand(xmtr, band, bandinfo) {
 	/* initializer */
-	this.id = TransmitterBand.common_id++;
-	this.xmtr = xmtr;
-	if ( band != null && bandinfo != null) {
-		this.band = band;
-		this.power = bandinfo[0];
-		this.mod = bandinfo[1];
-		this.ce = bandinfo[2];
-		this.ue = bandinfo[3];
-	}
+	this.init = function(xmtr, band, bandinfo) {
+		this.id = TransmitterBand.common_id++;
+		this.xmtr = xmtr;
+		if ( band != null && bandinfo != null) {
+			this.band = band;
+			this.power = bandinfo[0];
+			this.mod = bandinfo[1];
+			this.ce = bandinfo[2];
+			this.ue = bandinfo[3];
+		}
+		return true;
+	};
+
 	this.fini = function() {
 		return [this.band, [this.power, this.mod, this.ce, this.ue]];
 	}
@@ -155,15 +159,15 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
 		// while the assignment below saves us in the new (same?) band
-		if (this.band in xmtr.bands) {
-			delete xmtr.bands[this.band];
+		if (this.band in this.xmtr.bands) {
+			delete this.xmtr.bands[this.band];
 		}
 		this.band = band;
 		this.power = power;
 		this.mod = mod;
 		this.ce = ce;
 		this.ue = ue;
-		xmtr.bands[this.band] = this;
+		this.xmtr.bands[this.band] = this;
 		save_transmitters();
 		refresh();
 	}
@@ -198,7 +202,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		ret += '<input type="submit" name="save" value="Save"/></div>';
 		return ret;
 	};
-	return true;
+	return this.init(xmtr, band, bandinfo);
 }
 TransmitterBand.common_id = 0;
 
@@ -243,12 +247,15 @@ function Transmitter(init_data) {
 	};
 	/* member functions */
 	this.save = function() {
-		var name = $('#edit-xmtr-'+this.id+'-name').attr('value') || this.name;
-		this.name = name;
-		console.log('saving '+this.name);
-		transmitters[this.id] = this;
-		save_transmitters();
-		refresh();
+		var name = $('#edit-xmtr-'+this.id+'-name').attr('value');
+		if (name != this.name) {
+			this.name = name;
+			console.log('saving '+this.name);
+			transmitters[this.id] = this;
+			save_connections();
+			save_transmitters();
+			refresh();
+		}
 	};
 	this.editor = function() {
 		var ret = '';
@@ -417,13 +424,15 @@ function Connection(conn_data) {
 		}
 		return ret;
 	};
+
 	return this.init(conn_data);
 }
 Connection.common_id = 0;
+
 function connection_idx_from_transmitter(name) {
 	conns = [];
 	for (var c in connections) {
-		t = connections[c].transmitter;
+		var t = connections[c].transmitter;
 		console.log('compare "'+name+'" to "'+t.name+'"');
 		if (t.name == name) {
 			console.log('found connection: '+connections[c].name);
