@@ -288,25 +288,147 @@ function transmitter_by_name(name) {
 	return null;
 }
 
+function AntennaBand(ant, band, gain) {
+	/* initializer */
+	this.init = function(ant, band, gain) {
+		this.id = AntennaBand.common_id++;
+		this.antenna = ant;
+		this.band = band;
+		this.gain = gain || 0;
+		return true;
+	};
+
+	this.fini = function() {
+		return [this.band, this.gain];
+	};
+
+	/* member functions */
+	this.save = function() {
+		var band = $('#edit-aband-'+this.id+'-band').attr('value');
+		var gain = $('#edit-aband-'+this.id+'-gain').attr('value');
+		console.log('saving '+band+' aband, gain: '+gain);
+		// remove the old copy of whatever band this used to be
+		// in the case of band renaming, this gets rid of the old band
+		// while the assignment below saves us in the new (same?) band
+		if (this.band in this.antenna.bands) {
+			delete this.antenna.bands[this.band];
+		}
+		this.band = band;
+		this.gain = gain;
+		this.antenna.bands[this.band] = this;
+		save_antennas();
+		refresh();
+	};
+
+	this.ask_delete = function() {
+		return confirm('Delete '+this.band+' band?');
+	};
+
+	this.editor = function() {
+		var ret = '';
+		if (this.band == null) {
+			ret += '<h3>Add "'+this.antenna.name+'" band</h3>';
+		} else {
+			ret += '<h3>Edit "'+this.antenna.name+'" '+this.band+' band</h3>';
+		}
+		// band is a select, power is input, modulation is select, ce is input, ue is input
+		var band_keys = array_keys(bands_filter(this.antenna.bands, this.band));
+		band_keys = array_zip(band_keys, band_keys);
+		ret += '<div class="edit-item"><label for="edit-aband-'+this.id+'-band">Band</label><select id="edit-aband-'+this.id+'-band">'+select_options(band_keys, this.band)+'</select/></div>';
+		ret += '<div class="edit-item"><label for="edit-aband-'+this.id+'-gain">Gain (dBi)</label><input type="textbox" id="edit-aband-'+this.id+'-gain" value="'+this.gain+'"/></div>';
+		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
+		ret += '<input type="submit" name="save" value="Save"/></div>';
+		return ret;
+	};
+	return this.init(ant, band, gain);
+}
+AntennaBand.common_id = 0;
+
 // ant_data is [bands, cdx, udx, ground]
 function Antenna(name, ant_data) {
-	this.name = name;
-	this.bands = ant_data[0];
-	this.cdx = ant_data[1];
-	this.udx = ant_data[2];
-	this.ground = ant_data[3];
-	this.id = Antenna.common_id++;
+	this.init = function(name, ant_data) {
+		this.id = Antenna.common_id++;
+		this.bands = {};
+		if (name == null) {
+			this.name = '';
+			this.cdx = 0;
+			this.udx = 0;
+			this.ground = true;
+		} else {
+			this.name = name;
+			this.bands = {};
+			for (b in ant_data[0]) {
+				this.bands[b] = new AntennaBand(this, b, ant_data[0][b]);
+			}
+			this.cdx = ant_data[1];
+			this.udx = ant_data[2];
+			this.ground = ant_data[3];
+		}
+		return true;
+	};
+
+	this.fini = function() {
+		var bands = {};
+		for (band in this.bands) {
+			var v = this.bands[band].fini();
+			bands[v[0]] = v[1];
+		}
+		return [this.name, [bands, this.cdx, this.udx, this.ground]];
+	};
+
+	this.ask_delete = function() {
+		return confirm('Delete antenna "'+this.name+'"?');
+	};
+
+	this.save = function() {
+		var name = $('#edit-antenna-'+this.id+'-name').attr('value');
+		var cdx = $('#edit-antenna-'+this.id+'-cdx').attr('value');
+		var udx = $('#edit-antenna-'+this.id+'-udx').attr('value');
+		var ground = $('#edit-antenna-'+this.id+'-ground').attr('value');
+		ground = (ground == 'false')?false:true;
+		console.log('saving "'+this.name+'" antenna, cdx: '+cdx+', udx: '+udx+', ground: '+ground);
+		this.name = name;
+		this.cdx = cdx;
+		this.udx = udx;
+		this.ground = ground;
+		antennas[this.id] = this;
+		save_connections();
+		save_antennas();
+		refresh();
+	};
+
+	this.editor = function() {
+		ret = '';
+		if (this.name == "") {
+			ret += '<h3>Add an antenna</h3>';
+		} else {
+			ret += '<h3>Edit "'+this.name+'" antenna</h3>';
+		}
+		var ground_keys = {'true':'true', 'false':'false'};
+		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-name">Name</label><input type="textbox" id="edit-antenna-'+this.id+'-name" name="name" value="'+this.name+'"/></div>';
+		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-cdx">Controlled exposure (ft)</label><input type="textbox" id="edit-antenna-'+this.id+'-cdx" value="'+this.cdx+'"/></div>';
+		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-udx">Uncontrolled exposure (ft)</label><input type="textbox" id="edit-antenna-'+this.id+'-udx" value="'+this.udx+'"/></div>';
+		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-ground">Ground reflections</label><select id="edit-antenna-'+this.id+'-ground">'+select_options(ground_keys, String(this.ground))+'</select></div>';
+		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
+		ret += '<input type="submit" name="save" value="Save"/></div>';
+		return ret;
+	};
 
 	this.render = function() {
-		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> | <a class="link del-a" id="delete-antenna-'+this.id+'">Delete antenna</a></div><h4>'+name+'</h4>\nDistances: Controlled exposure@'+this.cdx+'ft, Uncontrolled exposure@'+this.udx+'ft; Ground:'+this.ground+'<ul>';
-		for (var band in this.bands) {
-			out += '<li>'+band+' @ '+this.bands[band]+' dBi</li>\n';
+		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> | <a class="link edit-a" id="edit-a-antenna-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-antenna-'+this.id+'">Delete</a></div><h4>'+this.name+'</h4>\nDistances: Controlled exposure@'+this.cdx+'ft, Uncontrolled exposure@'+this.udx+'ft; Ground:'+this.ground+'\n<table width="100%">';
+		out += '<tr><th width="15%">Band</th><th width="15%">Gain (dBi)</th><th></th></tr>\n';
+		for (var band in Bands) {
+			if (!(band in this.bands)) continue;
+			out += '<tr><td>'+band+'</td><td>'+this.bands[band].gain+'</td><td class="action-box"><a class="link edit-a" id="edit-a-aband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-aband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
 		}
-		out += '</ul></div>';
+		out += '</table></div>';
 		return out;
 	};
+
+	return this.init(name, ant_data);
 }
 Antenna.common_id = 0;
+
 function antenna_by_name(name) {
 	for (var a in antennas) {
 		if (antennas[a].name == name)
@@ -443,6 +565,18 @@ function connection_idx_from_transmitter(name) {
 	return conns;
 }
 
+function connection_idx_from_antenna(name) {
+	conns = [];
+	for (var c in connections) {
+		var a = connections[c].antenna;
+		console.log('compare "'+name+'" to "'+a.name+'"');
+		if (a.name == name) {
+			console.log('found connection: '+connections[c].name);
+			conns.push(c);
+		}
+	}
+	return conns;
+}
 
 function popup_box(html) {
 	$('body').append('<div class="popup-bg"></div><div class="popup">'+html+'</div>');
@@ -464,8 +598,12 @@ function add_a_thing(ele) {
 		case "tband":
 			thing = new TransmitterBand(transmitters[id]);
 			break;
-		case "antenna": type = "Antenna"; break;
-		case "aband": type = "AntennaBand"; break;
+		case "antenna":
+			thing = new Antenna();
+			break;
+		case "aband":
+			thing = new AntennaBand(antennas[id]);
+			break;
 		case "connection":
 			thing = new Connection();
 			break;
@@ -495,8 +633,12 @@ function edit_a_thing(ele) {
 		case "tband":
 			thing = transmitters[id].bands[index];
 			break;
-		case "antenna": type = "Antenna"; break;
-		case "aband": type = "AntennaBand"; break;
+		case "antenna":
+			thing = antennas[id];
+			break;
+		case "aband":
+			thing = antennas[id].bands[index];
+			break;
 		case "conn":
 			thing = connections[id];
 			break;
@@ -539,8 +681,25 @@ function del_a_thing(ele) {
 				save_transmitters();
 			}
 			break;
-		case "antenna": type = "Antenna"; break;
-		case "aband": type = "AntennaBand"; break;
+		case "antenna":
+			if (antennas[id].ask_delete()) {
+				var name = antennas[id].name;
+				var conns = connection_idx_from_antenna(name);
+				for (var c in conns) {
+					console.log('deleting conn '+connections[conns[c]].name);
+					delete connections[conns[c]];
+				}
+				delete antennas[id];
+				save_antennas();
+				save_connections();
+			}
+			break;
+		case "aband":
+			if (antennas[id].bands[index].ask_delete()) {
+				delete antennas[id].bands[index];
+				save_antennas();
+			}
+			break;
 		case "conn":
 			if (connections[id].ask_delete()) {
 				for (var c in connections) {
@@ -651,6 +810,17 @@ function load_transmitters(xmtr_data) {
 		t[nt.id] = nt;
 	}
 	return t;
+}
+function serialize_antennas() {
+	var ant_data = {}
+	for (var k in antennas) {
+		var v = antennas[k].fini();
+		ant_data[v[0]] = v[1];
+	}
+	return ant_data;
+}
+function save_antennas() {
+	setvar('antennas', serialize_antennas());
 }
 function load_antennas(ant_data) {
 	var a = {};
@@ -773,14 +943,14 @@ function show_results() {
 			}
 			var tloss = con.tuner_loss + con.other_loss + line_loss;
 			tloss = Math.pow(10, -(tloss/10.0));
-			var gain = Math.pow(10, ant.bands[b]/10.0);
+			var gain = Math.pow(10, ant.bands[b].gain/10.0);
 			results = '<tr>';
 			// calculate rfe/mpe/mdx for transmitter power at band with connection losses
 			ce = calc_exposure(true, band.power, modulation_duty_factor[band.mod]/100.0, band.ce/100.0, tloss, gain, freq, ant.cdx*cm_per_foot, ant.ground);
 			ue = calc_exposure(false, band.power, modulation_duty_factor[band.mod]/100.0, band.ue/100.0, tloss, gain, freq, ant.udx*cm_per_foot, ant.ground);
 			results += '<td>'+b+'</td><td>'+band.power+'</td><td>'+con.tuner_loss+'</td>';
 			results += '<td>'+line_loss.toPrecision(4)+'</td><td>'+con.other_loss+'</td>';
-			results += '<td>'+ant.bands[b].toPrecision(4)+'</td>';
+			results += '<td>'+ant.bands[b].gain.toPrecision(4)+'</td>';
 			results += '<td>'+(band.power*tloss*gain).toPrecision(4)+'</td>';
 			// controlled exposure
 			results += '<td>'+ce.mpe.toPrecision(4)+'</td>';
