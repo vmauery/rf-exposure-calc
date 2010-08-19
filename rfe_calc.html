@@ -554,6 +554,48 @@ function Connection(conn_data) {
 		return out;
 	};
 
+	this.results = function() {
+		var tm = this.transmitter;
+		var ant = this.antenna;
+		ret = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
+		ret += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
+		ret += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
+		for (var b in Bands) {
+			if (!(b in tm.bands) || ant.bands[b] == null) continue;
+			var band = tm.bands[b];
+			var freq = Bands[b][1];
+			var line_loss = (this.length/100.0)*wires[this.wire][b];
+			if (wires[this.wire][b] == null) {
+				console.error("Wire '"+this.wire+"' has no loss info at "+b);
+				line_loss = 0;
+			}
+			var tloss = this.tuner_loss + this.other_loss + line_loss;
+			tloss = Math.pow(10, -(tloss/10.0));
+			var gain = Math.pow(10, ant.bands[b].gain/10.0);
+			ret += '<tr>';
+			// calculate rfe/mpe/mdx for transmitter power at band with connection losses
+			ce = calc_exposure(true, band.power, modulation_duty_factor[band.mod]/100.0, band.ce/100.0, tloss, gain, freq, ant.cdx*cm_per_foot, ant.ground);
+			ue = calc_exposure(false, band.power, modulation_duty_factor[band.mod]/100.0, band.ue/100.0, tloss, gain, freq, ant.udx*cm_per_foot, ant.ground);
+			ret += '<td>'+b+'</td><td>'+band.power+'</td><td>'+this.tuner_loss+'</td>';
+			ret += '<td>'+line_loss.toPrecision(4)+'</td><td>'+this.other_loss+'</td>';
+			ret += '<td>'+ant.bands[b].gain.toPrecision(4)+'</td>';
+			ret += '<td>'+(band.power*tloss*gain).toPrecision(4)+'</td>';
+			// controlled exposure
+			ret += '<td>'+ce.mpe.toPrecision(4)+'</td>';
+			ret += '<td>'+ce.rfe.toPrecision(4)+'</td>';
+			ret += '<td>'+(ce.mdx/cm_per_foot).toPrecision(4)+'</td>';
+			ret += '<td class="'+(ce.rfe < ce.mpe ? '':'non')+'compliant">'+(ce.rfe < ce.mpe ? 'Yes':'No')+'</td>';
+			// uncontrolled exposure
+			ret += '<td>'+ue.mpe.toPrecision(4)+'</td>';
+			ret += '<td>'+ue.rfe.toPrecision(4)+'</td>';
+			ret += '<td>'+(ue.mdx/cm_per_foot).toPrecision(4)+'</td>';
+			ret += '<td class="'+(ue.rfe < ue.mpe ? '':'non')+'compliant">'+(ue.rfe < ue.mpe ? 'Yes':'No')+'</td>';
+			ret += '</tr>';
+		}
+		ret += '</table>';
+		return ret;
+	};
+
 	this.xmtr_list = function() {
 		var ret = {};
 		for (var t in transmitters) {
@@ -958,46 +1000,7 @@ function show_results() {
 	console.log('show_results');
 	$('#results > .dynamic').children().remove();
 	for (var c in connections) {
-		var con = connections[c];
-		var tm = con.transmitter;
-		var ant = con.antenna;
-		ctable = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ con.length+' ft of \''+con.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
-		ctable += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
-		ctable += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
-		for (var b in Bands) {
-			if (!(b in tm.bands) || ant.bands[b] == null) continue;
-			var band = tm.bands[b];
-			var freq = Bands[b][1];
-			var line_loss = (con.length/100.0)*wires[con.wire][b];
-			if (wires[con.wire][b] == null) {
-				console.error("Wire '"+con.wire+"' has no loss info at "+b);
-				line_loss = 0;
-			}
-			var tloss = con.tuner_loss + con.other_loss + line_loss;
-			tloss = Math.pow(10, -(tloss/10.0));
-			var gain = Math.pow(10, ant.bands[b].gain/10.0);
-			results = '<tr>';
-			// calculate rfe/mpe/mdx for transmitter power at band with connection losses
-			ce = calc_exposure(true, band.power, modulation_duty_factor[band.mod]/100.0, band.ce/100.0, tloss, gain, freq, ant.cdx*cm_per_foot, ant.ground);
-			ue = calc_exposure(false, band.power, modulation_duty_factor[band.mod]/100.0, band.ue/100.0, tloss, gain, freq, ant.udx*cm_per_foot, ant.ground);
-			results += '<td>'+b+'</td><td>'+band.power+'</td><td>'+con.tuner_loss+'</td>';
-			results += '<td>'+line_loss.toPrecision(4)+'</td><td>'+con.other_loss+'</td>';
-			results += '<td>'+ant.bands[b].gain.toPrecision(4)+'</td>';
-			results += '<td>'+(band.power*tloss*gain).toPrecision(4)+'</td>';
-			// controlled exposure
-			results += '<td>'+ce.mpe.toPrecision(4)+'</td>';
-			results += '<td>'+ce.rfe.toPrecision(4)+'</td>';
-			results += '<td>'+(ce.mdx/cm_per_foot).toPrecision(4)+'</td>';
-			results += '<td class="'+(ce.rfe < ce.mpe ? '':'non')+'compliant">'+(ce.rfe < ce.mpe ? 'Yes':'No')+'</td>';
-			// uncontrolled exposure
-			results += '<td>'+ue.mpe.toPrecision(4)+'</td>';
-			results += '<td>'+ue.rfe.toPrecision(4)+'</td>';
-			results += '<td>'+(ue.mdx/cm_per_foot).toPrecision(4)+'</td>';
-			results += '<td class="'+(ue.rfe < ue.mpe ? '':'non')+'compliant">'+(ue.rfe < ue.mpe ? 'Yes':'No')+'</td>';
-			results += '</tr>';
-			ctable += results;
-		}
-		$('#results > .dynamic').append(ctable);
+		$('#results > .dynamic').append(connections[c].results());
 	}
 // | transmitter | power | band | tuner losses | line losses | other losses | rfe | mpe | mdx | ok
 }
