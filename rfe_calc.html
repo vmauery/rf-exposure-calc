@@ -88,6 +88,22 @@ div.popup {
 	background: rgba(128,128,128,1);
 	z-index: 1000;
 }
+div.help {
+	display: none;
+	border: 2px solid gray;
+	margin: 1em;
+	padding: 0.5em;
+}
+.help > h2 {
+	margin-top: .1em;
+	clear: none;
+}
+.help-hide {
+	float: right;
+}
+a.help {
+	float: right;
+}
   </style>
   <link type="text/css" href="css/ui.all.css" rel="stylesheet" />
   <script type="text/javascript" src="js/jquery.js"></script>
@@ -913,34 +929,28 @@ function refresh(mask_errors) {
 }
 function show_transmitters() {
 	console.log('show_transmitters');
-	$('#transmitters').children().remove();
-	$('#transmitters').append(
-		'<a class="link add-a" id="add-a-xmtr">Add a transmitter</a>\n');
+	$('#transmitters > .dynamic').children().remove();
 	for (var t in transmitters) {
-		$('#transmitters').append(transmitters[t].render());
+		$('#transmitters > .dynamic').append(transmitters[t].render());
 	}
 }
 function show_antennas() {
 	console.log('show_antennas');
-	$('#antennas').children().remove();
-	$('#antennas').append(
-		'<a class="link add-a" id="add-a-antenna">Add an antenna</a>');
+	$('#antennas > .dynamic').children().remove();
 	for (var a in antennas) {
-		$('#antennas').append(antennas[a].render());
+		$('#antennas > .dynamic').append(antennas[a].render());
 	}
 }
 function show_connections() {
 	console.log('show_connections');
-	$('#connections').children().remove();
-	$('#connections').append(
-		'<a class="link add-a" id="add-a-connection">Add a connection</a>');
+	$('#connections > .dynamic').children().remove();
 	for (var c in connections) {
-		$('#connections').append(connections[c].render());
+		$('#connections > .dynamic').append(connections[c].render());
 	}
 }
 function show_results() {
 	console.log('show_results');
-	$('#results').children().remove();
+	$('#results > .dynamic').children().remove();
 	for (var c in connections) {
 		var con = connections[c];
 		var tm = con.transmitter;
@@ -981,7 +991,7 @@ function show_results() {
 			results += '</tr>';
 			ctable += results;
 		}
-		$('#results').append(ctable);
+		$('#results > .dynamic').append(ctable);
 	}
 // | transmitter | power | band | tuner losses | line losses | other losses | rfe | mpe | mdx | ok
 }
@@ -1093,6 +1103,19 @@ function do_interactive() {
 	}, function() {
 		$(this).find('.action-box').hide();
 	});
+	$('.link').filter('.help').unbind('click').click(function() {
+		var m = $(this).attr('id').split('-');
+		var type = m[1];
+		$('#help-'+type).hide();
+		$('#help-text-'+type).slideDown(250);
+	});
+	$('.link').filter('.help-hide').unbind('click').click(function() {
+		var m = $(this).attr('id').split('-');
+		var type = m[2];
+		$('#help-text-'+type).slideUp(250, function() {
+			$('#help-'+type).show();
+		});
+	});
 }
 function delvar(name) {
 	window.localStorage.removeItem('rfe.'+name);
@@ -1131,17 +1154,178 @@ function getvar(name, default_value) {
         <li><a href="#connections"><span>Connections</span></a></li>
         <li><a href="#results"><span>Results</span></a></li>
 		<li><a href="#eximport"><span>Import/Export</span></a></li>
-		<li><a href="#help"><span>Help</span></a></li>
+		<li><a href="#about"><span>About</span></a></li>
     </ul>
     <div id="transmitters">
+		<a class="link add-a" id="add-a-xmtr">Add a transmitter</a>
+		<a class="link help" id="help-xmtr">Help</a>
+		<div class="help" id="help-text-xmtr">
+			<a class="link help-hide" id="help-hide-xmtr">Hide help</a>
+			<h2>Transmitters</h2>
+			<p>
+			The Transmitters tab is where you should start.  In this tab, you
+			add a transmitter for each one you want to run calculations for.
+			You get to pick the name, but the names must be unique, so if you
+			have three of one radio, give them a suffix or something.
+			</p><p>
+			After clicking on 'Add a transmitter', you need to click on 'Add a
+			band' inside that transmitter.  Just like your real radio, each
+			transmitter here can have its own bands.  As you add the bands, you
+			specify information on how you will be using that band for this
+			calculator.  For example, if you typically use 50W on the 80m band
+			while using CW, you should enter that data there.  This way, you
+			can model your real-life usage of the radio.  In addition, you
+			should enter your usage windows for controlled and uncontrolled
+			exposure.  Remember that the controlled exposure window is six
+			minutes long and the uncontrolled window is 30 minutes.  These two
+			fields here are not in minutes, but rather in percentage.  So fill
+			in the percentages appropriately.
+			</p><p>
+			If you are using an amplifier with your radio, you can just assume
+			that the radio is putting out the amplifier's output for the sake
+			of simplification.
+			</p><p>
+			You only get to fill out each band once per transmitter, so use the
+			highest power configuration you plan on using.  Note that the
+			various modulation modes and exposure percentages will also reduce
+			the total RFE in the calculations.
+			</p><p>
+			After adding all your transmitters and transmitter bands, go on to
+			the Antennas tab.
+			</p>
+		</div>
+		<div class="dynamic">
+		</div>
     </div>
     <div id="antennas">
+		<a class="link add-a" id="add-a-antenna">Add an antenna</a>
+		<a class="link help" id="help-antenna">Help</a>
+		<div class="help" id="help-text-antenna">
+			<a class="link help-hide" id="help-hide-antenna">Hide help</a>
+			<h2>Antennas</h2>
+			<p>
+			The Antennas tab is where you enter information about your
+			antennas.  This includes the controlled and uncontrolled distances
+			for which we are making calculations.  Also, it gives you a chance
+			to enter the gain for each band that the antenna will be used with.
+			</p><p>
+			Click on 'Add an antenna' to start with and enter the basic
+			information.  The 'Ground reflections' entry is whether or not to
+			use the formula to incorporate ground reflections in the RFE
+			totals.  I use it, but you should refer to Bulletin 65 for what you
+			think you should do.  The controlled and uncontrolled distances are
+			basically how close you and your household can get to the antenna
+			and how close anyone else can get to it.
+			</p><p>
+			After saving the antenna, start adding bands.  This allows you to
+			set the gain for each band.  This gain is used in the formulas for
+			calculating RFE.  It should be listed as dBi, not dBd.  If your
+			antenna specs are in dBd, take the dBd number and add 2.15 to it.
+			</p><p>
+			When you have entered all your antennas, move on to the Connections
+			tab.
+			</p>
+		</div>
+		<div class="dynamic">
+		</div>
     </div>
     <div id="connections">
+		<a class="link add-a" id="add-a-connection">Add a connection</a>
+		<a class="link help" id="help-connection">Help</a>
+		<div class="help" id="help-text-connection">
+			<a class="link help-hide" id="help-hide-connection">Hide help</a>
+			<h2>Connections</h2>
+			<p>
+			The Connections tab is where you define the connections that are
+			between your transmitters and your antennas.  Each
+			transmitter/antenna pair can only have one connection, but each
+			transmitter can connect to multiple antennas and each antenna can
+			be connected to multiple transmitters, with each connection having
+			different characteristics.
+			</p><p>
+			Things that are included in the connection properties are wire
+			type, wire length, tuner losses, and any other losses (lightning
+			suppressors, line splitters, etc.)  This allows you to have a wide
+			range of flexibility in accurately modeling your connection setup.
+			All losses are specified in dB, so be sure to enter them that way.
+			If you need to add multiple losses to put in the other losses
+			field, you just add the dB values together.
+			</p><p>
+			Currently, I only have specs on a few wire types available, but if
+			you want this application to have more, feel free to send the specs
+			to me and I will add them.  Just make sure that they cover a wide
+			range so they can be used on lots of bands.
+			</p><p>
+			Add a connection for every physical connection you plan on
+			modeling.  You will see a section for each connection in the
+			Results tab.
+			</p>
+		</div>
+		<div class="dynamic">
+		</div>
     </div>
     <div id="results">
+		<a class="link help" id="help-results">Help</a>
+		<div class="help" id="help-text-results">
+			<a class="link help-hide" id="help-hide-results">Hide help</a>
+			<h2>Results</h2>
+			<p>
+			The Results tab is where all the results of the calculations are
+			shown for each of the radio/connection/antenna groups that you have
+			specified.
+			</p><p>
+			Listed in convenient tables, you see the data you entered in the
+			first few columns and then starting with 'Power at Antenna', you
+			see the ERP for each band.  Then, using that number, the
+			calculations show the RFE at both the controlled and uncontrolled
+			distances, the minimum allowable distance for each band and then
+			whether or not the band is within the limitations set by the FCC.
+			</p><p>
+			For each connection shown in the Results tab, and for each band
+			within those connections, you should make sure that both the
+			controlled and uncontrolled exposures are within the limits.  There
+			is a box that will say 'yes' or 'no' for each entry.  If any of the
+			boxes say 'no', then you need to look into your setup to see what
+			you can do to reduce the RF exposure for that band.  Some options
+			are to: </p><ol>
+			<li>Use a lower output power</li>
+			<li>Use a smaller operating window (i.e. transmit for less time in
+			each six or 30 minutes segments)</li>
+			<li>Use a modulation that is less power (FM is 100% modulation
+			whereas CW is only about 40%)</li>
+			<li>Use a lower-gain antenna or a more lossy network (it would be a
+			better idea to just turn down the power)</li>
+			</ol>
+		</div>
+		<div class="dynamic">
+		</div>
     </div>
     <div id="eximport">
+		<a class="link help" id="help-eximport">Help</a>
+		<div class="help" id="help-text-eximport">
+			<a class="link help-hide" id="help-hide-eximport">Hide help</a>
+			<h2>Import/Export</h2>
+			<p>
+			In the Import/Export tab, you can save your information for another
+			day or copy it to send to a friend.  All the data is already stored
+			in your browser (only locally&mdash;the application transmits no
+			data back to the server&mdash;all the calculations and data are
+			done on the client).
+			</p><p>
+			To export, hit the Export button and the data will all show up in a
+			weird looking format that can be copied and saved in a text file.
+			Then you can send it to a friend or use it later.
+			</p><p>
+			To import, paste exported data into the text area and hit the
+			Import button.  This will try to slurp up all the data and make
+			sense of it.  If something goes wrong, it should gracefully die,
+			without destroying what is already on your system.
+			</p><p>
+			To clear all the data off your system, press the "Clear all data"
+			button.  This will remove all saved settings from this application
+			from your browser, allowing you to start over with a clean slate.
+			</p>
+		</div>
 		<div class="edit-items">
 		<input id="eximport-import" type="button" name="import" value="Import"/>
 		<input id="eximport-export" type="button" name="export" value="Export"/>
@@ -1149,16 +1333,10 @@ function getvar(name, default_value) {
 		</div>
         <textarea id="eximport-data" rows="20" cols=80"></textarea>
     </div>
-	<div id="help">
+	<div id="about">
 	<p><a class="link" id="reset-data">Reset data</a></p>
-	<h2>Transmitters</h2>
-	<h2>Antennas</h2>
-	<h2>Connections</h2>
-	<h2>Results</h2>
-	<h2>Import/Export</h2>
-	<h2>About</h2>
 	<p>
-	RFE Calculator - A tool to help hams figure out the mysteries of RFE<br/>
+	RFE Calculator - A tool to help hams figure out the mysteries of RF Exposure<br/>
     Copyright &copy; 2009-2010 Vernon Mauery (N7OH)<br/>
 	</p><p>
     This program is free software: you can redistribute it and/or modify<br/>
