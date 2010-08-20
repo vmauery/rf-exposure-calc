@@ -117,6 +117,13 @@ a.help {
 
 const cm_per_foot = 30.48;
 
+function array_size(arr) {
+	var ret = 0;
+	for (var k in arr) {
+		ret++;
+	}
+	return ret;
+}
 function array_keys(arr) {
 	var ret = [];
 	for (k in arr) {
@@ -936,8 +943,12 @@ function load_connections(conn_data) {
 }
 
 function reset_data_store() {
-	if (!confirm('This cannot be undone.\nDelete all transmitter/antenna/connection data?'))
-		return;
+	if ((array_size(transmitters) ||
+		array_size(antennas) ||
+		array_size(connections)) &&
+		!confirm('This cannot be undone.\nReplace all transmitter/antenna/connection data?')) {
+			return;
+	}
 	var ltransmitters = {
 		// Transmitter(name, bands)
 		//band info is [power, duty cycle, win_c, win_u]
@@ -1028,8 +1039,12 @@ function show_results() {
 // | transmitter | power | band | tuner losses | line losses | other losses | rfe | mpe | mdx | ok
 }
 function reset_data() {
-	if (!confirm('This cannot be undone.\nDelete all transmitter/antenna/connection data?'))
-		return;
+	if ((array_size(transmitters) ||
+		array_size(antennas) ||
+		array_size(connections)) &&
+		!confirm('This cannot be undone.\nDelete all transmitter/antenna/connection data?')) {
+			return;
+	}
 	delvar('antennas');
 	delvar('connections');
 	delvar('transmitters');
@@ -1047,10 +1062,15 @@ function export_data() {
 	$('#eximport-data').val(JSON.stringify(data));
 }
 function import_data() {
-	if (!confirm('This cannot be undone.\nReplace all transmitter/antenna/connection data?'))
-		return;
+	if ((array_size(transmitters) ||
+		array_size(antennas) ||
+		array_size(connections)) &&
+		!confirm('This cannot be undone.\nReplace all transmitter/antenna/connection data?')) {
+			return;
+	}
 	try {
 		var data = $('#eximport-data').val();
+		if (data.length < 60) return;
 		console.log('import:\n'+data);
 		data = JSON.parse(data);
 		transmitters = load_transmitters(data['transmitters']);
