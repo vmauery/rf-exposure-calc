@@ -1200,18 +1200,23 @@ function getvar(name, default_value) {
 			You get to pick the name, but the names must be unique, so if you
 			have three of one radio, give them a suffix or something.
 			</p><p>
-			After clicking on 'Add a transmitter', you need to click on 'Add a
-			band' inside that transmitter.  Just like your real radio, each
-			transmitter here can have its own bands.  As you add the bands, you
-			specify information on how you will be using that band for this
-			calculator.  For example, if you typically use 50W on the 80m band
-			while using CW, you should enter that data there.  This way, you
-			can model your real-life usage of the radio.  In addition, you
-			should enter your usage windows for controlled and uncontrolled
-			exposure.  Remember that the controlled exposure window is six
-			minutes long and the uncontrolled window is 30 minutes.  These two
-			fields here are not in minutes, but rather in percentage.  So fill
-			in the percentages appropriately.
+			After clicking on "Add a transmitter", you will be prompted to "Add
+			a band" for that transmitter.  Just like your real radio, each
+			transmitter here can have its own bands.  It will continue to
+			prompt you to add new bands until you hit "Cancel".  If you decide
+			at some later time to add more bands, you can manually click on the
+			"Add a band" link inside the transmitter box.  Deleting or editing
+			the bands and/or transmitters can be done with those links as well.
+			</p><p>
+			As you add the bands, you specify information on how you will be
+			using that band for this calculator.  For example, if you typically
+			use 50W on the 80m band while using CW, you should enter that data
+			there.  This way, you can model your real-life usage of the radio.
+			In addition, you should enter your usage windows for controlled and
+			uncontrolled exposure.  Remember that the controlled exposure
+			window is six minutes long and the uncontrolled window is 30
+			minutes.  These two fields here are not in minutes, but rather in
+			percentage.  So fill in the percentages appropriately.
 			</p><p>
 			If you are using an amplifier with your radio, you can just assume
 			that the radio is putting out the amplifier's output for the sake
@@ -1241,21 +1246,23 @@ function getvar(name, default_value) {
 			for which we are making calculations.  Also, it gives you a chance
 			to enter the gain for each band that the antenna will be used with.
 			</p><p>
-			Click on 'Add an antenna' to start with and enter the basic
-			information.  The 'Ground reflections' entry is whether or not to
+			Click on "Add an antenna" to start with and enter the basic
+			information.  The "Ground reflections" entry is whether or not to
 			use the formula to incorporate ground reflections in the RFE
 			totals.  I use it, but you should refer to Bulletin 65 for what you
 			think you should do.  The controlled and uncontrolled distances are
 			basically how close you and your household can get to the antenna
 			and how close anyone else can get to it.
 			</p><p>
-			After saving the antenna, start adding bands.  This allows you to
-			set the gain for each band.  This gain is used in the formulas for
-			calculating RFE.  It should be listed as dBi, not dBd.  If your
-			antenna specs are in dBd, take the dBd number and add 2.15 to it.
+			After saving the antenna, you will be prompted to add bands until
+			you hit the "Cancel" button.  This allows you to set the gain for
+			each band.  This gain is used in the formulas for calculating RFE.
+			It should be listed as dBi, not dBd.  If your antenna specs are in
+			dBd, take the dBd number and add 2.15 to it.
 			</p><p>
-			When you have entered all your antennas, move on to the Connections
-			tab.
+			If you need to, you can always go back and add, delete or edit the
+			bands that you have created.  When you have entered all your
+			antennas, move on to the Connections tab.
 			</p>
 		</div>
 		<div class="dynamic">
@@ -1307,7 +1314,7 @@ function getvar(name, default_value) {
 			specified.
 			</p><p>
 			Listed in convenient tables, you see the data you entered in the
-			first few columns and then starting with 'Power at Antenna', you
+			first few columns and then starting with "Power at Antenna", you
 			see the ERP for each band.  Then, using that number, the
 			calculations show the RFE at both the controlled and uncontrolled
 			distances, the minimum allowable distance for each band and then
@@ -1316,8 +1323,8 @@ function getvar(name, default_value) {
 			For each connection shown in the Results tab, and for each band
 			within those connections, you should make sure that both the
 			controlled and uncontrolled exposures are within the limits.  There
-			is a box that will say 'yes' or 'no' for each entry.  If any of the
-			boxes say 'no', then you need to look into your setup to see what
+			is a box that will say "yes" or "no" for each entry.  If any of the
+			boxes say "no", then you need to look into your setup to see what
 			you can do to reduce the RF exposure for that band.  Some options
 			are to: </p><ol>
 			<li>Use a lower output power</li>
