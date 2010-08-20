@@ -115,6 +115,12 @@ a.help {
 <!--//
 (function($) {$(function() {
 
+if (!window.console) {
+	window.console = {};
+	window.console.log = function() {};
+	window.console.error = function() {};
+}
+
 const cm_per_foot = 30.48;
 
 function array_size(arr) {
