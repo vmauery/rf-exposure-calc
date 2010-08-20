@@ -41,6 +41,9 @@ td.noncompliant {
 table {
 	table-layout: fixed;
 }
+.error {
+	color: red;
+}
 table th {
 	text-align: left;
 }
@@ -215,9 +218,9 @@ function TransmitterBand(xmtr, band, bandinfo) {
 	this.editor = function() {
 		var ret = '';
 		if (this.band == null) {
-			ret += '<h3>Add "'+this.xmtr.name+'" band</h3>';
+			ret += '<h3>Add a band on "'+this.xmtr.name+'"</h3>';
 		} else {
-			ret += '<h3>Edit "'+this.xmtr.name+'" '+this.band+' band</h3>';
+			ret += '<h3>Edit '+this.band+' band  on "'+this.xmtr.name+'"</h3>';
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
 		var band_keys = array_keys(bands_filter(this.xmtr.bands, this.band));
@@ -287,7 +290,7 @@ function Transmitter(init_data) {
 		if (this.name == "") {
 			ret += '<h3>Add a transmitter</h3>';
 		} else {
-			ret += '<h3>Edit "'+this.name+'" transmitter</h3>';
+			ret += '<h3>Edit transmitter "'+this.name+'"</h3>';
 		}
 		ret += '<div class="edit-item"><label for="edit-xmtr-'+this.id+'-name">Name</label><input type="textbox" id="edit-xmtr-'+this.id+'-name" name="name" value="'+this.name+'"/></div>';
 		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
@@ -301,6 +304,10 @@ function Transmitter(init_data) {
 		for (var band in Bands) {
 			if (!(band in this.bands)) continue;
 			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-tband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
+		}
+		if (array_size(this.bands) == 0) {
+			var msg = 'This transmitter does not yet have bands defined.  Please click on "Add a band".';
+			out += '<tr><td colspan="6" class="error">'+msg+'</td></tr>';
 		}
 		out += '</table></div>';
 		return out;
@@ -357,9 +364,9 @@ function AntennaBand(ant, band, gain) {
 	this.editor = function() {
 		var ret = '';
 		if (this.band == null) {
-			ret += '<h3>Add "'+this.antenna.name+'" band</h3>';
+			ret += '<h3>Add a band on "'+this.antenna.name+'"</h3>';
 		} else {
-			ret += '<h3>Edit "'+this.antenna.name+'" '+this.band+' band</h3>';
+			ret += '<h3>Edit '+this.band+' band  on "'+this.antenna.name+'"</h3>';
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
 		var band_keys = array_keys(bands_filter(this.antenna.bands, this.band));
@@ -432,7 +439,7 @@ function Antenna(name, ant_data) {
 		if (this.name == "") {
 			ret += '<h3>Add an antenna</h3>';
 		} else {
-			ret += '<h3>Edit "'+this.name+'" antenna</h3>';
+			ret += '<h3>Edit antenna "'+this.name+'"</h3>';
 		}
 		var ground_keys = {'true':'true', 'false':'false'};
 		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-name">Name</label><input type="textbox" id="edit-antenna-'+this.id+'-name" name="name" value="'+this.name+'"/></div>';
@@ -450,6 +457,10 @@ function Antenna(name, ant_data) {
 		for (var band in Bands) {
 			if (!(band in this.bands)) continue;
 			out += '<tr><td>'+band+'</td><td>'+this.bands[band].gain+'</td><td class="action-box"><a class="link edit-a" id="edit-a-aband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-aband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
+		}
+		if (array_size(this.bands) == 0) {
+			var msg = 'This antenna does not yet have bands defined.  Please click on "Add a band".';
+			out += '<tr><td colspan="3" class="error">'+msg+'</td></tr>';
 		}
 		out += '</table></div>';
 		return out;
@@ -539,7 +550,7 @@ function Connection(conn_data) {
 		if (this.transmitter == null) {
 			ret += '<h3>Add a connection</h3>';
 		} else {
-			ret += '<h3>Edit "'+this.name+'" connection</h3>';
+			ret += '<h3>Edit connection "'+this.name+'"</h3>';
 		}
 		var tid = this.transmitter?this.transmitter.id:null;
 		var aid = this.antenna?this.antenna.id:null;
@@ -574,8 +585,10 @@ function Connection(conn_data) {
 		ret = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
 		ret += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
 		ret += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
+		var bands_rendered = 0;
 		for (var b in Bands) {
 			if (!(b in tm.bands) || ant.bands[b] == null) continue;
+			bands_rendered++;
 			var band = tm.bands[b];
 			var freq = Bands[b][1];
 			var line_loss = (this.length/100.0)*wires[this.wire][b];
@@ -605,6 +618,16 @@ function Connection(conn_data) {
 			ret += '<td>'+(ue.mdx/cm_per_foot).toPrecision(4)+'</td>';
 			ret += '<td class="'+(ue.rfe < ue.mpe ? '':'non')+'compliant">'+(ue.rfe < ue.mpe ? 'Yes':'No')+'</td>';
 			ret += '</tr>';
+		}
+		if (bands_rendered == 0) {
+			if (array_size(tm.bands) == 0) {
+				msg = 'Transmitter "'+tm.name+'" has no bands. Please go to the Transmitters tab and add bands there first.';
+			} else if (array_size(ant.bands) == 0) {
+				msg = 'Antenna "'+ant.name+'" has no bands. Please go to the Antennas tab and add bands there first.';
+			} else {
+				msg = 'There are no bands on transmitter "'+tm.name+'" that match the bands on antenna "'+ant.name+'".  Make sure that the bands are correct for your transmitter and antenna.';
+			}
+			ret += '<tr><td colspan="15" class="error">'+msg+'</td></tr>';
 		}
 		ret += '</table>';
 		return ret;
