@@ -157,6 +157,12 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			this.mod = bandinfo[1];
 			this.ce = bandinfo[2];
 			this.ue = bandinfo[3];
+		} else {
+			this.band = Bands[0];
+			this.power = 100;
+			this.mod = modulation_duty_factor[0];
+			this.ce = 50;
+			this.ue = 50;
 		}
 		return true;
 	};
@@ -196,11 +202,6 @@ function TransmitterBand(xmtr, band, bandinfo) {
 	this.editor = function() {
 		var ret = '';
 		if (this.band == null) {
-			this.band = Bands[0];
-			this.power = 0;
-			this.mod = modulation_duty_factor[0];
-			this.ce = 50;
-			this.ue = 50;
 			ret += '<h3>Add "'+this.xmtr.name+'" band</h3>';
 		} else {
 			ret += '<h3>Edit "'+this.xmtr.name+'" '+this.band+' band</h3>';
@@ -310,7 +311,7 @@ function AntennaBand(ant, band, gain) {
 		this.id = AntennaBand.common_id++;
 		this.antenna = ant;
 		this.band = band;
-		this.gain = gain || 0;
+		this.gain = gain || 2.15;
 		return true;
 	};
 
