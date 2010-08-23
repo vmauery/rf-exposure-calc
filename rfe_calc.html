@@ -209,6 +209,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		this.xmtr.bands[this.band] = this;
 		save_transmitters();
 		refresh();
+		return true;
 	};
 
 	this.ask_delete = function() {
@@ -275,6 +276,11 @@ function Transmitter(init_data) {
 
 	this.save = function() {
 		var name = $('#edit-xmtr-'+this.id+'-name').attr('value');
+		var samename = transmitter_by_name(name);
+		if (samename != null && samename.id != this.id) {
+			alert('You already have a transmitter named "'+name+'",\nplease choose something different.');
+			return false;
+		}
 		if (name != this.name) {
 			this.name = name;
 			console.log('saving '+this.name);
@@ -283,6 +289,7 @@ function Transmitter(init_data) {
 			save_transmitters();
 			refresh();
 		}
+		return true;
 	};
 
 	this.editor = function() {
@@ -355,6 +362,7 @@ function AntennaBand(ant, band, gain) {
 		this.antenna.bands[this.band] = this;
 		save_antennas();
 		refresh();
+		return true;
 	};
 
 	this.ask_delete = function() {
@@ -423,6 +431,11 @@ function Antenna(name, ant_data) {
 		var udx = $('#edit-antenna-'+this.id+'-udx').attr('value');
 		var ground = $('#edit-antenna-'+this.id+'-ground').attr('value');
 		ground = (ground == 'false')?false:true;
+		var samename = antenna_by_name(name);
+		if (samename != null && samename.id != this.id) {
+			alert('You already have an antenna named "'+name+'",\nplease choose something different.');
+			return false;
+		}
 		console.log('saving "'+this.name+'" antenna, cdx: '+cdx+', udx: '+udx+', ground: '+ground);
 		this.name = name;
 		this.cdx = cdx;
@@ -432,6 +445,7 @@ function Antenna(name, ant_data) {
 		save_connections();
 		save_antennas();
 		refresh();
+		return true;
 	};
 
 	this.editor = function() {
@@ -543,6 +557,7 @@ function Connection(conn_data) {
 		}
 		save_connections();
 		refresh();
+		return true;
 	};
 
 	this.editor = function() {
@@ -766,9 +781,12 @@ function edit_a_thing(ele) {
 	if (thing == null) return;
 	popup_box(type, id, thing.editor());
 	$('#popup-'+type+'-'+id).find(':submit[name=save]').click(function() {
-		thing.save();
+		if (thing.save()) {
+			$('#popup-'+type+'-'+id).remove();
+			$('#popup-bg-'+type+'-'+id).remove();
+		}
 	});
-	$('#popup-'+type+'-'+id).find(':submit').click(function() {
+	$('#popup-'+type+'-'+id).find(':submit[name=cancel]').click(function() {
 		$('#popup-'+type+'-'+id).remove();
 		$('#popup-bg-'+type+'-'+id).remove();
 	});
