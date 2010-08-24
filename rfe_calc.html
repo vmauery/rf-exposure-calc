@@ -866,6 +866,10 @@ function post_render() {
 		console.log('resetting data');
 		reset_data_store();
 	});
+	var prot = ["&#109;", "&#97;", "&#105;", "&#108;", "&#116;", "&#111;", "&#58;"].join('');
+	var addr = ["&#110;", "&#55;", "&#111;", "&#104;", "&#64;", "&#97;", "&#114;", "&#114;", "&#108;", "&#46;", "&#110;", "&#101;", "&#116;"];
+	addr = addr.join('');
+	$("#contact").replaceWith('<a href="'+prot+addr+'">'+addr+'</a>');
 }
 
 var wires = {
@@ -1459,7 +1463,12 @@ function getvar(name, default_value) {
 	to be able to share the application with other, but I didn't want to<br/>
 	store <i>their</i> information.  I finally learned about local storage<br/>
 	with HTML 5 and decided that I could use that for this application.<br/>
-	</p><hr/><tt><p>
+	</p><p>
+	If you have questions, comments, suggestions, flames or anything else<br/>
+	you would like to tell the author, please send an email: <span id="contact">[my call sign] at arrl dot net</span>
+	</p>
+	<hr/>
+	<tt><p>
     This program is free software: you can redistribute it and/or modify<br/>
     it under the terms of the GNU General Public License as published by<br/>
     the Free Software Foundation, either version 3 of the License, or<br/>
