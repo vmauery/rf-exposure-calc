@@ -1063,29 +1063,53 @@ function refresh(mask_errors) {
 function show_transmitters() {
 	console.log('show_transmitters');
 	$('#transmitters > .dynamic').children().remove();
+	var rendered_something = false;
 	for (var t in transmitters) {
+		rendered_something = true;
 		$('#transmitters > .dynamic').append(transmitters[t].render());
+	}
+	if (!rendered_something) {
+		$('#help-xmtr').hide();
+		$('#help-text-xmtr').show();
 	}
 }
 function show_antennas() {
 	console.log('show_antennas');
 	$('#antennas > .dynamic').children().remove();
+	var rendered_something = false;
 	for (var a in antennas) {
+		rendered_something = true;
 		$('#antennas > .dynamic').append(antennas[a].render());
+	}
+	if (!rendered_something) {
+		$('#help-antenna').hide();
+		$('#help-text-antenna').show();
 	}
 }
 function show_connections() {
 	console.log('show_connections');
 	$('#connections > .dynamic').children().remove();
+	var rendered_something = false;
 	for (var c in connections) {
+		rendered_something = true;
 		$('#connections > .dynamic').append(connections[c].render());
+	}
+	if (!rendered_something) {
+		$('#help-connection').hide();
+		$('#help-text-connection').show();
 	}
 }
 function show_results() {
 	console.log('show_results');
 	$('#results > .dynamic').children().remove();
+	var rendered_something = false;
 	for (var c in connections) {
+		rendered_something = true;
 		$('#results > .dynamic').append(connections[c].results());
+	}
+	if (!rendered_something) {
+		$('#help-results').hide();
+		$('#help-text-results').show();
 	}
 // | transmitter | power | band | tuner losses | line losses | other losses | rfe | mpe | mdx | ok
 }
