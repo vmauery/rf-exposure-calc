@@ -249,14 +249,6 @@ function TransmitterBand(xmtr, band, bandinfo) {
 	return this.init(xmtr, band, bandinfo);
 }
 TransmitterBand.common_id = 0;
-$('#tband-editor').dialog({
-	autoOpen: false,
-	width: '24em',
-	modal: true,
-	close: function() {
-		//allFields.val('').removeClass('ui-state-error');
-	}
-});
 
 function Transmitter(init_data) {
 	/* intializer */
@@ -361,14 +353,6 @@ function Transmitter(init_data) {
 	return this.init(init_data);
 }
 Transmitter.common_id = 0;
-$('#xmtr-editor').dialog({
-	autoOpen: false,
-	width: '20em',
-	modal: true,
-	close: function() {
-		//allFields.val('').removeClass('ui-state-error');
-	}
-});
 
 function transmitter_by_name(name) {
 	for (var t in transmitters) {
@@ -453,14 +437,6 @@ function AntennaBand(ant, band, gain) {
 	return this.init(ant, band, gain);
 }
 AntennaBand.common_id = 0;
-$('#aband-editor').dialog({
-	autoOpen: false,
-	width: '24em',
-	modal: true,
-	close: function() {
-		//allFields.val('').removeClass('ui-state-error');
-	}
-});
 
 // ant_data is [bands, cdx, udx, ground]
 function Antenna(name, ant_data) {
@@ -576,14 +552,6 @@ function Antenna(name, ant_data) {
 	return this.init(name, ant_data);
 }
 Antenna.common_id = 0;
-$('#antenna-editor').dialog({
-	autoOpen: false,
-	width: '24em',
-	modal: true,
-	close: function() {
-		//allFields.val('').removeClass('ui-state-error');
-	}
-});
 
 function antenna_by_name(name) {
 	for (var a in antennas) {
@@ -790,14 +758,6 @@ function Connection(conn_data) {
 	return this.init(conn_data);
 }
 Connection.common_id = 0;
-$('#conn-editor').dialog({
-	autoOpen: false,
-	width: '24em',
-	modal: true,
-	close: function() {
-		//allFields.val('').removeClass('ui-state-error');
-	}
-});
 
 function form_message(f, m, w) {
 	if (!m) {
@@ -1150,6 +1110,58 @@ function page_init() {
 	$('#eximport-export').unbind('click').click(export_data);
 	$('#eximport-reset').unbind('click').click(reset_data);
 	$('#eximport-sample').unbind('click').click(reset_data_store);
+	// set up the modal dialogs
+	$('#tband-editor').dialog({
+		autoOpen: false,
+		width: '24em',
+		modal: true,
+		close: function() {
+			$('#edit-tband-power').removeClass('ui-state-error');
+			$('#edit-tband-ce').removeClass('ui-state-error');
+			$('#edit-tband-ue').removeClass('ui-state-error');
+			form_message($('#tband-editor-msg'));
+		}
+	});
+	$('#xmtr-editor').dialog({
+		autoOpen: false,
+		width: '24em',
+		modal: true,
+		close: function() {
+			$('#edit-xmtr-name').removeClass('ui-state-error');
+			form_message($('#xmtr-editor-msg'));
+		}
+	});
+	$('#aband-editor').dialog({
+		autoOpen: false,
+		width: '24em',
+		modal: true,
+		close: function() {
+			$('#edit-aband-gain').removeClass('ui-state-error');
+			form_message($('#aband-editor-msg'));
+		}
+	});
+	$('#antenna-editor').dialog({
+		autoOpen: false,
+		width: '24em',
+		modal: true,
+		close: function() {
+			$('#edit-antenna-name').removeClass('ui-state-error');
+			$('#edit-antenna-cdx').removeClass('ui-state-error');
+			$('#edit-antenna-udx').removeClass('ui-state-error');
+			form_message($('#antenna-editor-msg'));
+		}
+	});
+	$('#conn-editor').dialog({
+		autoOpen: false,
+		width: '24em',
+		modal: true,
+		close: function() {
+			$('#edit-conn-tloss').removeClass('ui-state-error');
+			$('#edit-conn-wlen').removeClass('ui-state-error');
+			$('#edit-conn-other').removeClass('ui-state-error');
+			form_message($('#conn-editor-msg'));
+		}
+	});
 }
 
 function log_err(msg, e) {
