@@ -218,8 +218,8 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		band_keys = array_zip(band_keys, band_keys);
 		var mod_keys = array_keys(modulation_duty_factor);
 		mod_keys = array_zip(mod_keys, mod_keys);
-		$('#edit-tband-band').children().replaceWith(select_options(band_keys, this.band));
-		$('#edit-tband-mod').children().replaceWith(select_options(mod_keys, this.mod));
+		$('#edit-tband-band').empty().append(select_options(band_keys, this.band));
+		$('#edit-tband-mod').empty().append(select_options(mod_keys, this.mod));
 		// set the field values
 		$('#edit-tband-band').attr('value', this.band);
 		$('#edit-tband-power').attr('value', this.power);
@@ -426,7 +426,7 @@ function AntennaBand(ant, band, gain) {
 		// band is a select, gain is input
 		var band_keys = array_keys(bands_filter(this.antenna.bands, this.band));
 		band_keys = array_zip(band_keys, band_keys);
-		$('#edit-aband-band').children().replaceWith(select_options(band_keys, this.band));
+		$('#edit-aband-band').empty().append(select_options(band_keys, this.band));
 		// set the field values
 		$('#edit-aband-band').attr('value', this.band);
 		$('#edit-aband-gain').attr('value', this.gain);
@@ -674,9 +674,9 @@ function Connection(conn_data) {
 		var aid = this.antenna?this.antenna.id:null;
 		var wire_keys = array_keys(wires);
 		wire_keys = array_zip(wire_keys, wire_keys);
-		$('#edit-conn-xmtr').children().replaceWith(select_options(this.xmtr_list(), tid));
-		$('#edit-conn-ant').children().replaceWith(select_options(this.ant_list(), aid));
-		$('#edit-conn-wire').children().replaceWith(select_options(wire_keys, this.wire));
+		$('#edit-conn-xmtr').empty().append(select_options(this.xmtr_list(), tid));
+		$('#edit-conn-ant').empty().append(select_options(this.ant_list(), aid));
+		$('#edit-conn-wire').empty().append(select_options(wire_keys, this.wire));
 		// set the field values
 		$('#edit-conn-xmtr').attr('value', this.xmtr);
 		$('#edit-conn-ant').attr('value', this.ant);
@@ -1630,7 +1630,7 @@ function getvar(name, default_value) {
 	<div id="tband-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-tband-band">Band</label>
-		<select id="edit-tband-band"><option value=''></option></select/>
+		<select id="edit-tband-band"></select/>
 	</div>
 	<div class="edit-item">
 		<label for="edit-tband-power">Power (W)</label>
@@ -1638,7 +1638,7 @@ function getvar(name, default_value) {
 	</div>
 	<div class="edit-item">
 		<label for="edit-tband-mod">Modulation</label>
-		<select id="edit-tband-mod"><option value=''></option></select>
+		<select id="edit-tband-mod"></select>
 	</div>
 	<div class="edit-item">
 		<label for="edit-tband-ce">Controlled exposure (%)</label>
@@ -1653,7 +1653,7 @@ function getvar(name, default_value) {
 	<div id="aband-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-aband-band">Band</label>
-		<select id="edit-aband-band"><option value=''></option></select>
+		<select id="edit-aband-band"></select>
 	</div>
 	<div class="edit-item">
 		<label for="edit-aband-gain">Gain (dBi)</label>
@@ -1686,11 +1686,11 @@ function getvar(name, default_value) {
 	<div id="conn-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-conn-xmtr">Transmitter</label>
-		<select id="edit-conn-xmtr"><option value=""></option></select/>
+		<select id="edit-conn-xmtr"></select/>
 	</div>
 	<div class="edit-item">
 		<label for="edit-conn-ant">Antenna</label>
-		<select id="edit-conn-ant"><option value=""></option></select/>
+		<select id="edit-conn-ant"></select/>
 	</div>
 	<div class="edit-item">
 		<label for="edit-conn-tloss">Tuner losses (dB)</label>
@@ -1698,7 +1698,7 @@ function getvar(name, default_value) {
 	</div>
 	<div class="edit-item">
 		<label for="edit-conn-wire">Wire type</label>
-		<select id="edit-conn-wire"><option value=""></option></select>
+		<select id="edit-conn-wire"></select>
 	</div>
 	<div class="edit-item">
 		<label for="edit-conn-wlen">Wire length (ft)</label>
