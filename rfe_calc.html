@@ -72,25 +72,6 @@ a.link {
 div.action-box {
 	float: right;
 }
-div.popup-bg {
-	width: 100%;
-	height: 100%;
-	position: fixed;
-	left: 0;
-	top: 0;
-	background-color: rgba(128,128,128,.5);
-	z-index: 100;
-}
-div.popup {
-	position: fixed;
-	left: 35%;
-	top: 30%;
-	width: 30%;
-	padding: .5em 2em 2em 2em;
-	border: 1px solid black;
-	background: rgba(128,128,128,1);
-	z-index: 1000;
-}
 div.help {
 	display: none;
 	border: 2px solid gray;
@@ -106,6 +87,9 @@ div.help {
 }
 a.help {
 	float: right;
+}
+input.number {
+	width: 4em;
 }
   </style>
   <link type="text/css" href="css/jquery-ui.css" rel="stylesheet" />
@@ -188,11 +172,11 @@ function TransmitterBand(xmtr, band, bandinfo) {
 
 	/* member functions */
 	this.save = function() {
-		var band = $('#edit-tband-'+this.id+'-band').attr('value') || this.band;
-		var power = $('#edit-tband-'+this.id+'-power').attr('value') || this.power;
-		var mod = $('#edit-tband-'+this.id+'-mod').attr('value') || this.mod;
-		var ce = $('#edit-tband-'+this.id+'-ce').attr('value') || this.ce;
-		var ue = $('#edit-tband-'+this.id+'-ue').attr('value') || this.ue;
+		var band = $('#edit-tband-band').attr('value') || this.band;
+		var power = $('#edit-tband-power').attr('value') || this.power;
+		var mod = $('#edit-tband-mod').attr('value') || this.mod;
+		var ce = $('#edit-tband-ce').attr('value') || this.ce;
+		var ue = $('#edit-tband-ue').attr('value') || this.ue;
 		console.log('saving '+this.band+' tband, power: '+power+', modulation: '+mod+', cont exp: '+ce+', uncont exp: '+ue);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
@@ -215,30 +199,57 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		return confirm('Delete '+this.band+' band?');
 	};
 
-	this.editor = function() {
-		var ret = '';
-		if (this.band == null) {
-			ret += '<h3>Add a band on "'+this.xmtr.name+'"</h3>';
+	this.editor = function(next) {
+		// set the title
+		var title;
+		if (this.name == "") {
+			title = 'Add a band on "'+this.xmtr.name+'"';
 		} else {
-			ret += '<h3>Edit '+this.band+' band  on "'+this.xmtr.name+'"</h3>';
+			title = 'Edit '+this.band+' band  on "'+this.xmtr.name+'"';
 		}
 		// band is a select, power is input, modulation is select, ce is input, ue is input
 		var band_keys = array_keys(bands_filter(this.xmtr.bands, this.band));
 		band_keys = array_zip(band_keys, band_keys);
 		var mod_keys = array_keys(modulation_duty_factor);
 		mod_keys = array_zip(mod_keys, mod_keys);
-		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-band">Band</label><select id="edit-tband-'+this.id+'-band">'+select_options(band_keys, this.band)+'</select/></div>';
-		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-power">Power (W)</label><input type="textbox" id="edit-tband-'+this.id+'-power" value="'+this.power+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-mod">Modulation</label><select id="edit-tband-'+this.id+'-mod">'+select_options(mod_keys, this.mod)+'</select></div>';
-		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-ce">Controlled exposure (%)</label><input type="textbox" id="edit-tband-'+this.id+'-ce" value="'+this.ce+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-tband-'+this.id+'-ue">Uncontrolled exposure (%)</label><input type="textbox" id="edit-tband-'+this.id+'-ue" value="'+this.ue+'"/></div>';
-		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
-		ret += '<input type="submit" name="save" value="Save"/></div>';
-		return ret;
+		$('#edit-tband-band').children().replaceWith(select_options(band_keys, this.band));
+		$('#edit-tband-mod').children().replaceWith(select_options(mod_keys, this.mod));
+		// set the field values
+		$('#edit-tband-band').attr('value', this.band);
+		$('#edit-tband-power').attr('value', this.power);
+		$('#edit-tband-mod').attr('value', this.mod);
+		$('#edit-tband-ce').attr('value', this.ce);
+		$('#edit-tband-ue').attr('value', this.ue);
+		// set the buttons to reflect this object
+		var thing = this;
+		$('#tband-editor').dialog('option', {
+			'buttons': {
+				'Save':function() {
+					thing.save();
+					$(this).dialog('close');
+					if (next != null) {
+						add_a_thing(null, next);
+					}
+				},
+				Cancel: function() {
+					$(this).dialog('close');
+				},
+			},
+			'title': title,
+		});
+		$('#tband-editor').dialog('open');
 	};
 	return this.init(xmtr, band, bandinfo);
 }
 TransmitterBand.common_id = 0;
+$('#tband-editor').dialog({
+	autoOpen: false,
+	width: '24em',
+	modal: true,
+	close: function() {
+		//allFields.val('').removeClass('ui-state-error');
+	}
+});
 
 function Transmitter(init_data) {
 	/* intializer */
@@ -274,7 +285,7 @@ function Transmitter(init_data) {
 	};
 
 	this.save = function() {
-		var name = $('#edit-xmtr-'+this.id+'-name').attr('value');
+		var name = $('#edit-xmtr-name').attr('value');
 		var samename = transmitter_by_name(name);
 		if (samename != null && samename.id != this.id) {
 			alert('You already have a transmitter named "'+name+'",\nplease choose something different.');
@@ -291,17 +302,34 @@ function Transmitter(init_data) {
 		return true;
 	};
 
-	this.editor = function() {
-		var ret = '';
+	this.editor = function(next) {
+		// set the title
+		var title;
 		if (this.name == "") {
-			ret += '<h3>Add a transmitter</h3>';
+			title = 'Add a transmitter';
 		} else {
-			ret += '<h3>Edit transmitter "'+this.name+'"</h3>';
+			title = 'Edit transmitter "'+this.name+'"';
 		}
-		ret += '<div class="edit-item"><label for="edit-xmtr-'+this.id+'-name">Name</label><input type="textbox" id="edit-xmtr-'+this.id+'-name" name="name" value="'+this.name+'"/></div>';
-		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
-		ret += '<input type="submit" name="save" value="Save"/></div>';
-		return ret;
+		// set the field values
+		$('#edit-xmtr-name').attr('value', this.name);
+		// set the buttons to reflect this object
+		var thing = this;
+		$('#xmtr-editor').dialog('option', {
+			'buttons': {
+				'Save':function() {
+					thing.save();
+					$(this).dialog('close');
+					if (next != null) {
+						add_a_thing(null, next);
+					}
+				},
+				Cancel: function() {
+					$(this).dialog('close');
+				},
+			},
+			'title': title,
+		});
+		$('#xmtr-editor').dialog('open');
 	};
 
 	this.render = function() {
@@ -322,6 +350,14 @@ function Transmitter(init_data) {
 	return this.init(init_data);
 }
 Transmitter.common_id = 0;
+$('#xmtr-editor').dialog({
+	autoOpen: false,
+	width: '20em',
+	modal: true,
+	close: function() {
+		//allFields.val('').removeClass('ui-state-error');
+	}
+});
 
 function transmitter_by_name(name) {
 	for (var t in transmitters) {
@@ -347,8 +383,8 @@ function AntennaBand(ant, band, gain) {
 
 	/* member functions */
 	this.save = function() {
-		var band = $('#edit-aband-'+this.id+'-band').attr('value');
-		var gain = parseFloat($('#edit-aband-'+this.id+'-gain').attr('value'));
+		var band = $('#edit-aband-band').attr('value');
+		var gain = parseFloat($('#edit-aband-gain').attr('value'));
 		console.log('saving '+band+' aband, gain: '+gain);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
@@ -368,25 +404,51 @@ function AntennaBand(ant, band, gain) {
 		return confirm('Delete '+this.band+' band?');
 	};
 
-	this.editor = function() {
-		var ret = '';
-		if (this.band == null) {
-			ret += '<h3>Add a band on "'+this.antenna.name+'"</h3>';
+	this.editor = function(next) {
+		// set the title
+		var title;
+		if (this.name == "") {
+			title = 'Add a band on "'+this.antenna.name+'"';
 		} else {
-			ret += '<h3>Edit '+this.band+' band  on "'+this.antenna.name+'"</h3>';
+			title = 'Edit '+this.band+' band  on "'+this.antenna.name+'"';
 		}
-		// band is a select, power is input, modulation is select, ce is input, ue is input
+		// band is a select, gain is input
 		var band_keys = array_keys(bands_filter(this.antenna.bands, this.band));
 		band_keys = array_zip(band_keys, band_keys);
-		ret += '<div class="edit-item"><label for="edit-aband-'+this.id+'-band">Band</label><select id="edit-aband-'+this.id+'-band">'+select_options(band_keys, this.band)+'</select/></div>';
-		ret += '<div class="edit-item"><label for="edit-aband-'+this.id+'-gain">Gain (dBi)</label><input type="textbox" id="edit-aband-'+this.id+'-gain" value="'+this.gain+'"/></div>';
-		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
-		ret += '<input type="submit" name="save" value="Save"/></div>';
-		return ret;
+		$('#edit-aband-band').children().replaceWith(select_options(band_keys, this.band));
+		// set the field values
+		$('#edit-aband-band').attr('value', this.band);
+		$('#edit-aband-gain').attr('value', this.gain);
+		// set the buttons to reflect this object
+		var thing = this;
+		$('#aband-editor').dialog('option', {
+			'buttons': {
+				'Save':function() {
+					thing.save();
+					$(this).dialog('close');
+					if (next != null) {
+						add_a_thing(null, next);
+					}
+				},
+				Cancel: function() {
+					$(this).dialog('close');
+				},
+			},
+			'title': title,
+		});
+		$('#aband-editor').dialog('open');
 	};
 	return this.init(ant, band, gain);
 }
 AntennaBand.common_id = 0;
+$('#aband-editor').dialog({
+	autoOpen: false,
+	width: '24em',
+	modal: true,
+	close: function() {
+		//allFields.val('').removeClass('ui-state-error');
+	}
+});
 
 // ant_data is [bands, cdx, udx, ground]
 function Antenna(name, ant_data) {
@@ -425,10 +487,10 @@ function Antenna(name, ant_data) {
 	};
 
 	this.save = function() {
-		var name = $('#edit-antenna-'+this.id+'-name').attr('value');
-		var cdx = $('#edit-antenna-'+this.id+'-cdx').attr('value');
-		var udx = $('#edit-antenna-'+this.id+'-udx').attr('value');
-		var ground = $('#edit-antenna-'+this.id+'-ground').attr('value');
+		var name = $('#edit-antenna-name').attr('value');
+		var cdx = $('#edit-antenna-cdx').attr('value');
+		var udx = $('#edit-antenna-udx').attr('value');
+		var ground = $('#edit-antenna-ground').attr('value');
 		ground = (ground == 'false')?false:true;
 		var samename = antenna_by_name(name);
 		if (samename != null && samename.id != this.id) {
@@ -447,21 +509,37 @@ function Antenna(name, ant_data) {
 		return true;
 	};
 
-	this.editor = function() {
-		ret = '';
+	this.editor = function(next) {
+		// set the title
+		var title;
 		if (this.name == "") {
-			ret += '<h3>Add an antenna</h3>';
+			title = 'Add an antenna';
 		} else {
-			ret += '<h3>Edit antenna "'+this.name+'"</h3>';
+			title = 'Edit antenna "'+this.name+'"';
 		}
-		var ground_keys = {'true':'true', 'false':'false'};
-		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-name">Name</label><input type="textbox" id="edit-antenna-'+this.id+'-name" name="name" value="'+this.name+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-cdx">Controlled exposure (ft)</label><input type="textbox" id="edit-antenna-'+this.id+'-cdx" value="'+this.cdx+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-udx">Uncontrolled exposure (ft)</label><input type="textbox" id="edit-antenna-'+this.id+'-udx" value="'+this.udx+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-antenna-'+this.id+'-ground">Ground reflections</label><select id="edit-antenna-'+this.id+'-ground">'+select_options(ground_keys, String(this.ground))+'</select></div>';
-		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
-		ret += '<input type="submit" name="save" value="Save"/></div>';
-		return ret;
+		// set the field values
+		$('#edit-antenna-name').attr('value', this.name);
+		$('#edit-antenna-cdx').attr('value', this.cdx);
+		$('#edit-antenna-udx').attr('value', this.udx);
+		$('#edit-antenna-ground').attr('value', this.ground);
+		// set the buttons to reflect this object
+		var thing = this;
+		$('#antenna-editor').dialog('option', {
+			'buttons': {
+				'Save':function() {
+					thing.save();
+					$(this).dialog('close');
+					if (next != null) {
+						add_a_thing(null, next);
+					}
+				},
+				Cancel: function() {
+					$(this).dialog('close');
+				},
+			},
+			'title': title,
+		});
+		$('#antenna-editor').dialog('open');
 	};
 
 	this.render = function() {
@@ -482,6 +560,14 @@ function Antenna(name, ant_data) {
 	return this.init(name, ant_data);
 }
 Antenna.common_id = 0;
+$('#antenna-editor').dialog({
+	autoOpen: false,
+	width: '24em',
+	modal: true,
+	close: function() {
+		//allFields.val('').removeClass('ui-state-error');
+	}
+});
 
 function antenna_by_name(name) {
 	for (var a in antennas) {
@@ -523,12 +609,12 @@ function Connection(conn_data) {
 	};
 
 	this.save = function() {
-		var xmtr = transmitters[parseInt($('#edit-conn-'+this.id+'-xmtr').attr('value'))];
-		var ant = antennas[parseInt($('#edit-conn-'+this.id+'-ant').attr('value'))];
-		var tloss = parseFloat($('#edit-conn-'+this.id+'-tloss').attr('value'));
-		var wire = $('#edit-conn-'+this.id+'-wire').attr('value');
-		var wlen = parseFloat($('#edit-conn-'+this.id+'-wlen').attr('value'));
-		var other = parseFloat($('#edit-conn-'+this.id+'-other').attr('value'));
+		var xmtr = transmitters[parseInt($('#edit-conn-xmtr').attr('value'))];
+		var ant = antennas[parseInt($('#edit-conn-ant').attr('value'))];
+		var tloss = parseFloat($('#edit-conn-tloss').attr('value'));
+		var wire = $('#edit-conn-wire').attr('value');
+		var wlen = parseFloat($('#edit-conn-wlen').attr('value'));
+		var other = parseFloat($('#edit-conn-other').attr('value'));
 		var name = xmtr.name + ' <-> ' + ant.name;
 		console.log('saving "'+name+'": tloss: '+tloss+', wire: '+wire+', length: '+wlen+', other: '+other);
 		tt = this.transmitter;
@@ -559,26 +645,47 @@ function Connection(conn_data) {
 		return true;
 	};
 
-	this.editor = function() {
-		var ret = '';
+	this.editor = function(next) {
+		// set the title
+		var title;
 		if (this.transmitter == null) {
-			ret += '<h3>Add a connection</h3>';
+			title = 'Add an connection';
 		} else {
-			ret += '<h3>Edit connection "'+this.name+'"</h3>';
+			title = 'Edit connection "'+this.name+'"';
 		}
+		// set up the selects
 		var tid = this.transmitter?this.transmitter.id:null;
 		var aid = this.antenna?this.antenna.id:null;
 		var wire_keys = array_keys(wires);
 		wire_keys = array_zip(wire_keys, wire_keys);
-		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-xmtr">Transmitter</label><select id="edit-conn-'+this.id+'-xmtr">'+select_options(this.xmtr_list(), tid)+'</select/></div>';
-		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-ant">Antenna</label><select id="edit-conn-'+this.id+'-ant">'+select_options(this.ant_list(), aid)+'</select/></div>';
-		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-tloss">Tuner losses (dB)</label><input type="textbox" id="edit-conn-'+this.id+'-tloss" value="'+this.tuner_loss+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-wire">Wire type</label><select id="edit-conn-'+this.id+'-wire">'+select_options(wire_keys, this.wire)+'</select></div>';
-		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-wlen">Wire length (ft)</label><input type="textbox" id="edit-conn-'+this.id+'-wlen" value="'+this.length+'"/></div>';
-		ret += '<div class="edit-item"><label for="edit-conn-'+this.id+'-other">Other losses (dB)</label><input type="textbox" id="edit-conn-'+this.id+'-other" value="'+this.other_loss+'"/></div>';
-		ret += '<div class="edit-item"><input type="submit" name="cancel" value="Cancel"/> ';
-		ret += '<input type="submit" name="save" value="Save"/></div>';
-		return ret;
+		$('#edit-conn-xmtr').children().replaceWith(select_options(this.xmtr_list(), tid));
+		$('#edit-conn-ant').children().replaceWith(select_options(this.ant_list(), aid));
+		$('#edit-conn-wire').children().replaceWith(select_options(wire_keys, this.wire));
+		// set the field values
+		$('#edit-conn-xmtr').attr('value', this.xmtr);
+		$('#edit-conn-ant').attr('value', this.ant);
+		$('#edit-conn-tloss').attr('value', this.tuner_loss);
+		$('#edit-conn-wire').attr('value', this.wire);
+		$('#edit-conn-wlen').attr('value', this.length);
+		$('#edit-conn-other').attr('value', this.other_loss);
+		// set the buttons to reflect this object
+		var thing = this;
+		$('#conn-editor').dialog('option', {
+			'buttons': {
+				'Save':function() {
+					thing.save();
+					$(this).dialog('close');
+					if (next != null) {
+						add_a_thing(null, next);
+					}
+				},
+				Cancel: function() {
+					$(this).dialog('close');
+				},
+			},
+			'title': title,
+		});
+		$('#conn-editor').dialog('open');
 	};
 
 	this.render = function() {
@@ -666,6 +773,15 @@ function Connection(conn_data) {
 	return this.init(conn_data);
 }
 Connection.common_id = 0;
+$('#conn-editor').dialog({
+	autoOpen: false,
+	width: '24em',
+	modal: true,
+	close: function() {
+		//allFields.val('').removeClass('ui-state-error');
+	}
+});
+
 
 function connection_idx_from_transmitter(name) {
 	conns = [];
@@ -693,25 +809,15 @@ function connection_idx_from_antenna(name) {
 	return conns;
 }
 
-function popup_box(type, id, html) {
-	$('body').append('<div class="popup-bg" id="popup-bg-'+type+'-'+id+'"></div><div class="popup" id="popup-'+type+'-'+id+'">'+html+'</div>');
-	$('#popup-bg-'+type+'-'+id).unbind('click').click(function(e) {
-		$(this).remove();
-		$('#popup-'+type+'-'+id).remove();
-	});
-}
-
 function add_a_thing(ele, next) {
 	var type;
 	var id;
 	var thing;
-	var subid;
 	if (next == null) {
 		var m = $(ele).attr('id').split('-');
 		type = m[2];
 		id = parseInt(m[3]);
 		thing = null;
-		subid = 0;
 	} else {
 		console.log('add a thing next: '+next);
 		type = next[0];
@@ -724,7 +830,6 @@ function add_a_thing(ele, next) {
 			break;
 		case "tband":
 			thing = new TransmitterBand(transmitters[id]);
-			subid = thing.id;
 			break;
 		case "antenna":
 			thing = new Antenna();
@@ -732,25 +837,13 @@ function add_a_thing(ele, next) {
 			break;
 		case "aband":
 			thing = new AntennaBand(antennas[id]);
-			subid = thing.id;
 			break;
 		case "connection":
 			thing = new Connection();
 			break;
 	}
 	if (thing == null) return;
-	var pid = id+'-'+subid;
-	popup_box(type, pid, thing.editor());
-	$('#popup-'+type+'-'+pid).find(':submit[name=save]').click(function() {
-		thing.save();
-		if (next != null) {
-			add_a_thing(null, next);
-		}
-	});
-	$('#popup-'+type+'-'+pid).find(':submit').click(function() {
-		$('#popup-'+type+'-'+pid).remove();
-		$('#popup-bg-'+type+'-'+pid).remove();
-	});
+	thing.editor(next);
 }
 
 function edit_a_thing(ele) {
@@ -778,17 +871,7 @@ function edit_a_thing(ele) {
 			break;
 	}
 	if (thing == null) return;
-	popup_box(type, id, thing.editor());
-	$('#popup-'+type+'-'+id).find(':submit[name=save]').click(function() {
-		if (thing.save()) {
-			$('#popup-'+type+'-'+id).remove();
-			$('#popup-bg-'+type+'-'+id).remove();
-		}
-	});
-	$('#popup-'+type+'-'+id).find(':submit[name=cancel]').click(function() {
-		$('#popup-'+type+'-'+id).remove();
-		$('#popup-bg-'+type+'-'+id).remove();
-	});
+	thing.editor();
 }
 
 function del_a_thing(ele) {
@@ -810,13 +893,13 @@ function del_a_thing(ele) {
 				delete transmitters[id];
 				save_transmitters();
 				save_connections();
-			}
+			} else return;
 			break;
 		case "tband":
 			if (transmitters[id].bands[index].ask_delete()) {
 				delete transmitters[id].bands[index];
 				save_transmitters();
-			}
+			} else return;
 			break;
 		case "antenna":
 			if (antennas[id].ask_delete()) {
@@ -829,13 +912,13 @@ function del_a_thing(ele) {
 				delete antennas[id];
 				save_antennas();
 				save_connections();
-			}
+			} else return;
 			break;
 		case "aband":
 			if (antennas[id].bands[index].ask_delete()) {
 				delete antennas[id].bands[index];
 				save_antennas();
-			}
+			} else return;
 			break;
 		case "conn":
 			if (connections[id].ask_delete()) {
@@ -845,7 +928,7 @@ function del_a_thing(ele) {
 						delete connections[c];
 					}
 				}
-			}
+			} else return;
 			break;
 	}
 	refresh();
@@ -1506,7 +1589,91 @@ function getvar(name, default_value) {
     along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p></tt>
 	</div>
 </div>
-
+<div id="xmtr-editor">
+	<div class="edit-item">
+		<label for="edit-xmtr-name">Name</label>
+		<input type="textbox" id="edit-xmtr-name" name="name" value=""/>
+	</div>
+</div>
+<div id="tband-editor">
+	<div class="edit-item">
+		<label for="edit-tband-band">Band</label>
+		<select id="edit-tband-band"><option value=''></option></select/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-tband-power">Power (W)</label>
+		<input type="textbox" class="number" id="edit-tband-power" value=""/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-tband-mod">Modulation</label>
+		<select id="edit-tband-mod"><option value=''></option></select>
+	</div>
+	<div class="edit-item">
+		<label for="edit-tband-ce">Controlled exposure (%)</label>
+		<input type="textbox" class="number" id="edit-tband-ce" value=""/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-tband-ue">Uncontrolled exposure (%)</label>
+		<input type="textbox" class="number" id="edit-tband-ue" value=""/>
+	</div>
+</div>
+<div id="aband-editor">
+	<div class="edit-item">
+		<label for="edit-aband-band">Band</label>
+		<select id="edit-aband-band"><option value=''></option></select>
+	</div>
+	<div class="edit-item">
+		<label for="edit-aband-gain">Gain (dBi)</label>
+		<input type="textbox" class="number" id="edit-aband-gain" value=""/>
+	</div>
+</div>
+<div id="antenna-editor">
+	<div class="edit-item">
+		<label for="edit-antenna-name">Name</label>
+		<input type="textbox" id="edit-antenna-name" name="name" value=""/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-antenna-cdx">Controlled exposure (ft)</label>
+		<input type="textbox" class="number" id="edit-antenna-cdx" value=""/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-antenna-udx">Uncontrolled exposure (ft)</label>
+		<input type="textbox" class="number" id="edit-antenna-udx" value=""/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-antenna-ground">Ground reflections</label>
+		<select id="edit-antenna-ground">
+			<option value="true">True</option>
+			<option value="false">False</option>
+		</select>
+	</div>
+</div>
+<div id="conn-editor">
+	<div class="edit-item">
+		<label for="edit-conn-xmtr">Transmitter</label>
+		<select id="edit-conn-xmtr"><option value=""></option></select/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-conn-ant">Antenna</label>
+		<select id="edit-conn-ant"><option value=""></option></select/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-conn-tloss">Tuner losses (dB)</label>
+		<input type="textbox" class="number" id="edit-conn-tloss" value=""/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-conn-wire">Wire type</label>
+		<select id="edit-conn-wire"><option value=""></option></select>
+	</div>
+	<div class="edit-item">
+		<label for="edit-conn-wlen">Wire length (ft)</label>
+		<input type="textbox" class="number" id="edit-conn-wlen" value=""/>
+	</div>
+	<div class="edit-item">
+		<label for="edit-conn-other">Other losses (dB)</label>
+		<input type="textbox" class="number" id="edit-conn-other" value=""/>
+	</div>
+</div>
 </body>
 </html>
 
