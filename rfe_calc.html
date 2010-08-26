@@ -20,6 +20,7 @@ Copyright © 2009-2010, Vernon Mauery (N7OH)
   <meta name="keywords" content="Amateur Radio RF Safety Calculator, RF Safety, RF Calculator, RF Safety Calculator, frequency, bands, licence, radio frequency, RF, MPE, RFE Calculator">
   <meta name="description" content="Calculate RF exposures for various transmitters, antennas and other settings">
   <title>N7OH RF Exposure Calculator</title>
+  <link type="text/css" href="css/jquery-ui.css" rel="stylesheet" />
   <style>
 div.value {
 	display: inline;
@@ -95,10 +96,12 @@ div.help {
 	margin-top: .1em;
 	clear: none;
 }
-.help-hide {
+a.help-hide {
+	color: #0aad0a;
 	float: right;
 }
 a.help {
+	color: #cd0a0a;
 	float: right;
 }
 div.text {
@@ -117,7 +120,6 @@ input.number {
 	display: none;
 }
   </style>
-  <link type="text/css" href="css/jquery-ui.css" rel="stylesheet" />
   <script type="text/javascript" src="js/jquery.js"></script>
   <script type="text/javascript" src="js/jquery-ui.js"></script>
   <script type="text/javascript">
@@ -1427,7 +1429,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
     </ul>
     <div id="transmitters" class="initial-noshow">
 		<a class="link add-a primary-link" id="add-a-xmtr">Add a transmitter</a>
-		<a class="link help" id="help-xmtr">Help</a>
+		<a class="link help" id="help-xmtr">Help!</a>
 		<div class="help" id="help-text-xmtr">
 			<a class="link help-hide" id="help-hide-xmtr">Hide help</a>
 			<h2>Transmitters</h2>
@@ -1473,7 +1475,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
     </div>
     <div id="antennas" class="initial-noshow">
 		<a class="link add-a primary-link" id="add-a-antenna">Add an antenna</a>
-		<a class="link help" id="help-antenna">Help</a>
+		<a class="link help" id="help-antenna">Help!</a>
 		<div class="help" id="help-text-antenna">
 			<a class="link help-hide" id="help-hide-antenna">Hide help</a>
 			<h2>Antennas</h2>
@@ -1507,7 +1509,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
     </div>
     <div id="connections" class="initial-noshow">
 		<a class="link add-a primary-link" id="add-a-connection">Add a connection</a>
-		<a class="link help" id="help-connection">Help</a>
+		<a class="link help" id="help-connection">Help!</a>
 		<div class="help" id="help-text-connection">
 			<a class="link help-hide" id="help-hide-connection">Hide help</a>
 			<h2>Connections</h2>
@@ -1541,7 +1543,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 		</div>
     </div>
     <div id="results" class="initial-noshow">
-		<a class="link help" id="help-results">Help</a>
+		<a class="link help" id="help-results">Help!</a>
 		<div class="help" id="help-text-results">
 			<a class="link help-hide" id="help-hide-results">Hide help</a>
 			<h2>Results</h2>
@@ -1577,7 +1579,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 		</div>
     </div>
     <div id="eximport" class="initial-noshow">
-		<a class="link help" id="help-eximport">Help</a>
+		<a class="link help" id="help-eximport">Help!</a>
 		<div class="help" id="help-text-eximport">
 			<a class="link help-hide" id="help-hide-eximport">Hide help</a>
 			<h2>Import/Export</h2>
