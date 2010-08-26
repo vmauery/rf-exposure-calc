@@ -91,6 +91,12 @@ a.help {
 input.number {
 	width: 4em;
 }
+.form-error {
+	border: 1px solid #cd0a0a; /* this needs to match the ui-state-error class */
+	padding: 0.3em;
+	display: none;
+	margin-bottom: 0.8em;
+}
   </style>
   <link type="text/css" href="css/jquery-ui.css" rel="stylesheet" />
   <script type="text/javascript" src="js/jquery.js"></script>
@@ -225,13 +231,14 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		$('#tband-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
-					thing.save();
-					$(this).dialog('close');
-					if (next != null) {
-						add_a_thing(null, next);
+					if (thing.save()) {
+						$(this).dialog('close');
+						if (next != null) {
+							add_a_thing(null, next);
+						}
 					}
 				},
-				Cancel: function() {
+				'Cancel': function() {
 					$(this).dialog('close');
 				},
 			},
@@ -288,7 +295,10 @@ function Transmitter(init_data) {
 		var name = $('#edit-xmtr-name').attr('value');
 		var samename = transmitter_by_name(name);
 		if (samename != null && samename.id != this.id) {
-			alert('You already have a transmitter named "'+name+'",\nplease choose something different.');
+			form_message($('#xmtr-editor-msg'),
+				'Transmitter names must be unique',
+				$('#edit-xmtr-name')
+			);
 			return false;
 		}
 		if (name != this.name) {
@@ -317,13 +327,14 @@ function Transmitter(init_data) {
 		$('#xmtr-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
-					thing.save();
-					$(this).dialog('close');
-					if (next != null) {
-						add_a_thing(null, next);
+					if (thing.save()) {
+						$(this).dialog('close');
+						if (next != null) {
+							add_a_thing(null, next);
+						}
 					}
 				},
-				Cancel: function() {
+				'Cancel': function() {
 					$(this).dialog('close');
 				},
 			},
@@ -424,13 +435,14 @@ function AntennaBand(ant, band, gain) {
 		$('#aband-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
-					thing.save();
-					$(this).dialog('close');
-					if (next != null) {
-						add_a_thing(null, next);
+					if (thing.save()) {
+						$(this).dialog('close');
+						if (next != null) {
+							add_a_thing(null, next);
+						}
 					}
 				},
-				Cancel: function() {
+				'Cancel': function() {
 					$(this).dialog('close');
 				},
 			},
@@ -494,7 +506,10 @@ function Antenna(name, ant_data) {
 		ground = (ground == 'false')?false:true;
 		var samename = antenna_by_name(name);
 		if (samename != null && samename.id != this.id) {
-			alert('You already have an antenna named "'+name+'",\nplease choose something different.');
+			form_message($('#antenna-editor-msg'),
+				'Antenna names must be unique',
+				$('#edit-antenna-name')
+			);
 			return false;
 		}
 		console.log('saving "'+this.name+'" antenna, cdx: '+cdx+', udx: '+udx+', ground: '+ground);
@@ -527,13 +542,14 @@ function Antenna(name, ant_data) {
 		$('#antenna-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
-					thing.save();
-					$(this).dialog('close');
-					if (next != null) {
-						add_a_thing(null, next);
+					if (thing.save()) {
+						$(this).dialog('close');
+						if (next != null) {
+							add_a_thing(null, next);
+						}
 					}
 				},
-				Cancel: function() {
+				'Cancel': function() {
 					$(this).dialog('close');
 				},
 			},
@@ -673,13 +689,14 @@ function Connection(conn_data) {
 		$('#conn-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
-					thing.save();
-					$(this).dialog('close');
-					if (next != null) {
-						add_a_thing(null, next);
+					if (thing.save()) {
+						$(this).dialog('close');
+						if (next != null) {
+							add_a_thing(null, next);
+						}
 					}
 				},
-				Cancel: function() {
+				'Cancel': function() {
 					$(this).dialog('close');
 				},
 			},
@@ -782,6 +799,19 @@ $('#conn-editor').dialog({
 	}
 });
 
+function form_message(f, m, w) {
+	if (!m) {
+		f.text('');
+		f.hide();
+		return;
+	}
+	w.addClass('ui-state-error');
+	f.text(m).addClass('ui-state-error');
+	f.show();
+	setTimeout(function() {
+			f.removeClass('ui-state-error');
+		}, 3000);
+}
 
 function connection_idx_from_transmitter(name) {
 	conns = [];
@@ -1590,12 +1620,14 @@ function getvar(name, default_value) {
 	</div>
 </div>
 <div id="xmtr-editor">
+	<div id="xmtr-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-xmtr-name">Name</label>
 		<input type="textbox" id="edit-xmtr-name" name="name" value=""/>
 	</div>
 </div>
 <div id="tband-editor">
+	<div id="tband-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-tband-band">Band</label>
 		<select id="edit-tband-band"><option value=''></option></select/>
@@ -1618,6 +1650,7 @@ function getvar(name, default_value) {
 	</div>
 </div>
 <div id="aband-editor">
+	<div id="aband-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-aband-band">Band</label>
 		<select id="edit-aband-band"><option value=''></option></select>
@@ -1628,6 +1661,7 @@ function getvar(name, default_value) {
 	</div>
 </div>
 <div id="antenna-editor">
+	<div id="antenna-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-antenna-name">Name</label>
 		<input type="textbox" id="edit-antenna-name" name="name" value=""/>
@@ -1649,6 +1683,7 @@ function getvar(name, default_value) {
 	</div>
 </div>
 <div id="conn-editor">
+	<div id="conn-editor-msg" class="form-error"></div>
 	<div class="edit-item">
 		<label for="edit-conn-xmtr">Transmitter</label>
 		<select id="edit-conn-xmtr"><option value=""></option></select/>
