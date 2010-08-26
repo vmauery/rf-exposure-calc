@@ -120,8 +120,6 @@ input.number {
   <link type="text/css" href="css/jquery-ui.css" rel="stylesheet" />
   <script type="text/javascript" src="js/jquery.js"></script>
   <script type="text/javascript" src="js/jquery-ui.js"></script>
-  <script type="text/javascript" src="js/modernizr.js"></script>
-  <script type="text/javascript" src="js/json2.js"></script>
   <script type="text/javascript">
 <!--//
 (function($) {$(function() {
@@ -1402,16 +1400,15 @@ function getvar(name, default_value) {
 	return JSON.parse(v);
 }
 
- $("#tabs").tabs();
- if (!Modernizr.localstorage) {
-  alert('Your browser does not have local storage\nThis means that you will not be able to save\nany of your changes.');
- }
+if (('localStorage' in window) && window['localStorage'] !== null) {
 
- transmitters = load_transmitters(getvar('transmitters', []));
- antennas = load_antennas(getvar('antennas', []));
- connections = load_connections(getvar('connections', []));
- page_init();
- refresh();
+	$("#tabs").tabs();
+	transmitters = load_transmitters(getvar('transmitters', []));
+	antennas = load_antennas(getvar('antennas', []));
+	connections = load_connections(getvar('connections', []));
+	page_init();
+	refresh();
+}
 
 }); })(jQuery);
 
