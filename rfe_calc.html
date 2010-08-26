@@ -44,8 +44,14 @@ table {
 .error {
 	color: red;
 }
+h4 {
+	font-size: 110%;
+	margin-top: 0.5em;
+	margin-bottom: 0;
+}
 table th {
 	text-align: left;
+	font-size: 90%;
 }
 table td {
 	padding: 0em .5em 0em .5em;
@@ -62,6 +68,13 @@ table.results td {
 }
 label::after {
 	content: ": ";
+}
+a.add-a, a.edit-a, a.del-a {
+	border-bottom: 1px dotted gray;
+}
+a.primary-link {
+	font-size: 120%;
+	font-weight: bold;
 }
 a.link {
 	cursor: pointer;
@@ -88,6 +101,9 @@ div.help {
 a.help {
 	float: right;
 }
+div.text {
+	width: 600px;
+}
 input.number {
 	width: 4em;
 }
@@ -96,6 +112,9 @@ input.number {
 	padding: 0.3em;
 	display: none;
 	margin-bottom: 0.8em;
+}
+.initial-noshow {
+	display: none;
 }
   </style>
   <link type="text/css" href="css/jquery-ui.css" rel="stylesheet" />
@@ -635,7 +654,7 @@ function Connection(conn_data) {
 		if (this.transmitter == null) {
 			title = 'Add an connection';
 		} else {
-			title = 'Edit connection "'+this.name+'"';
+			title = 'Edit connection';
 		}
 		// set up the selects
 		var tid = this.transmitter?this.transmitter.id:null;
@@ -1110,6 +1129,7 @@ function page_init() {
 	$('#eximport-export').unbind('click').click(export_data);
 	$('#eximport-reset').unbind('click').click(reset_data);
 	$('#eximport-sample').unbind('click').click(reset_data_store);
+	$('.hideme').hide();
 	// set up the modal dialogs
 	$('#tband-editor').dialog({
 		autoOpen: false,
@@ -1408,8 +1428,8 @@ function getvar(name, default_value) {
 		<li><a href="#eximport"><span>Import/Export</span></a></li>
 		<li><a href="#about"><span>About</span></a></li>
     </ul>
-    <div id="transmitters">
-		<a class="link add-a" id="add-a-xmtr">Add a transmitter</a>
+    <div id="transmitters" class="initial-noshow">
+		<a class="link add-a primary-link" id="add-a-xmtr">Add a transmitter</a>
 		<a class="link help" id="help-xmtr">Help</a>
 		<div class="help" id="help-text-xmtr">
 			<a class="link help-hide" id="help-hide-xmtr">Hide help</a>
@@ -1454,8 +1474,8 @@ function getvar(name, default_value) {
 		<div class="dynamic">
 		</div>
     </div>
-    <div id="antennas">
-		<a class="link add-a" id="add-a-antenna">Add an antenna</a>
+    <div id="antennas" class="initial-noshow">
+		<a class="link add-a primary-link" id="add-a-antenna">Add an antenna</a>
 		<a class="link help" id="help-antenna">Help</a>
 		<div class="help" id="help-text-antenna">
 			<a class="link help-hide" id="help-hide-antenna">Hide help</a>
@@ -1488,8 +1508,8 @@ function getvar(name, default_value) {
 		<div class="dynamic">
 		</div>
     </div>
-    <div id="connections">
-		<a class="link add-a" id="add-a-connection">Add a connection</a>
+    <div id="connections" class="initial-noshow">
+		<a class="link add-a primary-link" id="add-a-connection">Add a connection</a>
 		<a class="link help" id="help-connection">Help</a>
 		<div class="help" id="help-text-connection">
 			<a class="link help-hide" id="help-hide-connection">Hide help</a>
@@ -1523,7 +1543,7 @@ function getvar(name, default_value) {
 		<div class="dynamic">
 		</div>
     </div>
-    <div id="results">
+    <div id="results" class="initial-noshow">
 		<a class="link help" id="help-results">Help</a>
 		<div class="help" id="help-text-results">
 			<a class="link help-hide" id="help-hide-results">Hide help</a>
@@ -1559,7 +1579,7 @@ function getvar(name, default_value) {
 		<div class="dynamic">
 		</div>
     </div>
-    <div id="eximport">
+    <div id="eximport" class="initial-noshow">
 		<a class="link help" id="help-eximport">Help</a>
 		<div class="help" id="help-text-eximport">
 			<a class="link help-hide" id="help-hide-eximport">Hide help</a>
@@ -1598,23 +1618,35 @@ function getvar(name, default_value) {
         <textarea id="eximport-data" rows="20" cols=80"></textarea>
     </div>
 	<div id="about">
+		<div class="text hideme">
+		<h2>Your Web Browser is Not Supported</h2>
+		<p>Sorry for the inconvenience. The N7OH RFE Calculator requires just about
+		anything except Internet Explorer.  Try <a href="http://www.getfirefox.com/">
+		FireFox</a>, <a href="http://www.opera.com/download/">Opera</a>,
+		<a href="http://www.google.com/chrome">Chrome</a>, or maybe even
+		Safari.  Whatever you try, make sure it is a new browser that supports HTML 5.
+		</p>
+		<p>73,<br/>Vernon Mauery, N7OH</p>
+		</div>
 	<p>
 	RF Exposure Calculator - Helping hams understand the mysteries of RF Exposure<br/>
     Copyright &copy; 2009-2010 <a href='http://vernon.mauery.com/'>Vernon Mauery</a> (N7OH)<br/>
-	</p><p>
+	</p>
+	<div class="text"><p>
 	The idea originated from the <a
 	href='http://hintlink.com/power_density.htm'>power density calculator
-	written by W4/VP9KF</a>.<br/>
-	I started writing my own javascript version only to find that it was<br/>
-	really annoying to need to retype everything in each time I visited<br/>
-	the page.  I wanted something that would store my data.  And I wanted<br/>
-	to be able to share the application with others, but I didn't want to<br/>
-	store <i>their</i> information.  I finally learned about local storage<br/>
-	with HTML 5 and decided that I could use that for this application.<br/>
+	written by W4/VP9KF</a>.
+	I started writing my own javascript version only to find that it was
+	really annoying to need to retype everything in each time I visited
+	the page.  I wanted something that would store my data.  And I wanted
+	to be able to share the application with others, but I didn't want to
+	store <i>their</i> information.  I finally learned about local storage
+	with HTML 5 and decided that I could use that for this application.
 	</p><p>
-	If you have questions, comments, suggestions, flames or anything else<br/>
+	If you have questions, comments, suggestions, flames or anything else
 	you would like to tell the author, please send an email: <span id="contact">[my call sign] at arrl dot net</span>
 	</p>
+	</div>
 	<hr/>
 	<tt><p>
     This program is free software: you can redistribute it and/or modify<br/>
@@ -1631,6 +1663,7 @@ function getvar(name, default_value) {
     along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p></tt>
 	</div>
 </div>
+<div class="initial-noshow">
 <div id="xmtr-editor">
 	<div id="xmtr-editor-msg" class="form-error"></div>
 	<div class="edit-item">
@@ -1720,6 +1753,7 @@ function getvar(name, default_value) {
 		<label for="edit-conn-other">Other losses (dB)</label>
 		<input type="textbox" class="number" id="edit-conn-other" value=""/>
 	</div>
+</div>
 </div>
 </body>
 </html>
