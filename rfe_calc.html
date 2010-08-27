@@ -1047,14 +1047,16 @@ function bands_filter(bands, current_band) {
 
 var modulation_duty_factor = {
 	'CW': 40,
-	'SSB voice low': 20,
-	'SSB voice high': 40,
-	'FM': 100,
+	'SSB: no processing': 20,
+	'SSB: medium processing': 40,
+	'SSB: heavy processing': 50,
 	'SSB AFSK': 100,
 	'SSB SSTV': 100,
-	'AM 50%': 50,
-	'AM 100%': 25,
-	'AM 0%': 100,
+	'FSK': 100,
+	'FM': 100,
+	'AM: 50% modulation': 50,
+	'AM: 100% modulation': 25,
+	'AM: carrier': 100,
 	'ATV': 60,
 };
 
@@ -1074,6 +1076,7 @@ function save_transmitters() {
 	setvar('transmitters', serialize_transmitters());
 }
 function load_transmitters(xmtr_data) {
+	xmtr_data = xmtr_data || getvar('transmitters', {});
 	var t = {}
 	for (var k in xmtr_data) {
 		var nt = new Transmitter([k, xmtr_data[k]]);
@@ -1093,6 +1096,7 @@ function save_antennas() {
 	setvar('antennas', serialize_antennas());
 }
 function load_antennas(ant_data) {
+	ant_data = ant_data || getvar('antennas', {});
 	var a = {};
 	for (var k in ant_data) {
 		var na = new Antenna(k, ant_data[k]);
@@ -1111,6 +1115,7 @@ function save_connections() {
 	setvar('connections', serialize_connections());
 }
 function load_connections(conn_data) {
+	conn_data = conn_data || getvar('connections', []);
 	var c = [];
 	for (var k in conn_data) {
 		c[k] = new Connection(conn_data[k]);
@@ -1128,8 +1133,8 @@ function reset_data_store() {
 	var ltransmitters = {
 		// Transmitter(name, bands)
 		//band info is [power, duty cycle, win_c, win_u]
-		'IC-7000':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30], '6m':[100, 'FM', 50, 50], '2m':[50, 'FM', 50, 50], '440 MHz':[30, 'FM', 50, 50]},
-		'Elecraft K3/100':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB voice high', 50, 50], '40m':[100, 'SSB voice high', 50, 50], '30m':[100, 'SSB voice high', 50, 50], '20m':[100, 'SSB voice high', 50, 50], '17m':[100, 'SSB voice high', 50, 50], '15m':[100, 'SSB voice high', 50, 50], '12m':[100, 'SSB voice high', 50, 50], '10m':[100, 'SSB voice high', 50, 30]},
+		'IC-7000':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB: medium processing', 50, 50], '40m':[100, 'SSB: medium processing', 50, 50], '30m':[100, 'SSB: medium processing', 50, 50], '20m':[100, 'SSB: medium processing', 50, 50], '17m':[100, 'SSB: medium processing', 50, 50], '15m':[100, 'SSB: medium processing', 50, 50], '12m':[100, 'SSB: medium processing', 50, 50], '10m':[100, 'SSB: medium processing', 50, 30], '6m':[100, 'FM', 50, 50], '2m':[50, 'FM', 50, 50], '440 MHz':[30, 'FM', 50, 50]},
+		'Elecraft K3/100':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB: medium processing', 50, 50], '40m':[100, 'SSB: medium processing', 50, 50], '30m':[100, 'SSB: medium processing', 50, 50], '20m':[100, 'SSB: medium processing', 50, 50], '17m':[100, 'SSB: medium processing', 50, 50], '15m':[100, 'SSB: medium processing', 50, 50], '12m':[100, 'SSB: medium processing', 50, 50], '10m':[100, 'SSB: medium processing', 50, 30]},
 		'IC-92AD':{'2m':[5, 'FM', 50, 50], '440 MHz':[5, 'FM', 50, 50]},
 	};
 	var lantennas = {
@@ -1151,10 +1156,14 @@ function reset_data_store() {
 	setvar('antennas', lantennas);
 	setvar('transmitters', ltransmitters);
 	setvar('connections', lconnections);
-	transmitters = load_transmitters(getvar('transmitters'));
-	antennas = load_antennas(getvar('antennas'));
-	connections = load_connections(getvar('connections'));
+	setvar('schema', SCHEMA);
+	/*
+	// this only makes sense if we are not reloading the window
+	transmitters = load_transmitters();
+	antennas = load_antennas();
+	connections = load_connections();
 	refresh();
+	*/
 	window.location.reload(true);
 }
 
@@ -1304,10 +1313,12 @@ function reset_data() {
 	delete transmitters;
 	delete antennas;
 	delete connections;
+	setvar('schema', SCHEMA);
 	window.location.reload(true);
 }
 function export_data() {
 	var data = {
+		'schema': getvar('schema', SCHEMA),
 		'antennas': getvar('antennas', {}),
 		'connections': getvar('connections', []),
 		'transmitters': getvar('transmitters', {}),
@@ -1321,24 +1332,36 @@ function import_data() {
 		!confirm('This cannot be undone.\nReplace all transmitter/antenna/connection data?')) {
 			return;
 	}
+	var oldant = antennas,
+	    oldcon = connections,
+	    oldxmtr = transmitters,
+	    oldschema = getvar('schema', 0);
 	try {
 		var data = $('#eximport-data').val();
 		if (data.length < 60) return;
 		console.log('import:\n'+data);
 		data = JSON.parse(data);
-		transmitters = load_transmitters(data['transmitters']);
-		antennas = load_antennas(data['antennas']);
-		connections = load_connections(data['connections']);
-		refresh(false);
 		setvar('antennas', data['antennas']);
 		setvar('connections', data['connections']);
 		setvar('transmitters', data['transmitters']);
-		window.location.reload(true);
+		setvar('schema', data['schema'] || 0)
+		check_schema();
+		transmitters = load_transmitters();
+		antennas = load_antennas();
+		connections = load_connections();
+		refresh(false);
 	} catch (e) {
 		log_err('failed to import: ', e);
 		alert('Imported data was not in correct format');
-		window.location.reload(true);
+		antennas = oldant;
+		connections = oldcon;
+		transmitters = oldxmtr;
+		save_antennas();
+		save_connections();
+		save_transmitters();
+		setvar('schema', oldschema);
 	}
+	window.location.reload(true);
 }
 function calc_mpe(frequency, controlled) {
 	frequency /= 1000000;
@@ -1438,13 +1461,64 @@ function getvar(name, default_value) {
 		return default_value;
 	return JSON.parse(v);
 }
+const SCHEMA = 1;
+function update_schema(ver) {
+	switch (ver) {
+		case 1:
+			// renamed some of the modulation factors
+			var remap = {
+				'SSB voice low': 'SSB: no processing',
+				'SSB voice high': 'SSB: medium processing',
+				'AM 50%': 'AM: 50% modulation',
+				'AM 100%': 'AM: 100% modulation',
+				'AM 0%': 'AM: carrier',
+			};
+			transmitters = load_transmitters();
+			var updated_transmitters = false;
+			for (var t in transmitters) {
+				for (var tb in transmitters[t].bands) {
+					for (k in remap) {
+						if (k == transmitters[t].bands[tb].mod) {
+							//console.log('updating '+transmitters[t].name+':'+transmitters[t].bands[tb].band+' modulation from "'+transmitters[t].bands[tb].mod+'" to "'+remap[k]+'"');
+							transmitters[t].bands[tb].mod = remap[k];
+							updated_transmitters = true;
+						}
+					}
+				}
+			}
+			if (updated_transmitters) {
+				save_transmitters();
+			}
+			delete transmitters;
+			return true;
+		default:
+			return true;
+	}
+}
+function check_schema() {
+	var schema = getvar('schema', 0);
+	var success = true;
+	if (schema < SCHEMA) {
+		//console.log('updating schema');
+		for (var i=schema+1; i<=SCHEMA; i++) {
+			console.log('updating to schema version '+i);
+			success &= update_schema(i);
+		}
+		if (!success) {
+			alert('Sorry, some database updates failed to apply.\nYour data may be broken now.  The best thing would be to edit\nanything that looks broken to see if you can fix it.');
+		}
+		setvar('schema', SCHEMA);
+	} else if (schema > SCHEMA) {
+		alert('The database schemas do not match, you must be viewing an old\nversion of the calculator with new data,\nor tried to import data from a newer version.\nClear your browser cache and try again.');
+	}
+}
 
 if (('localStorage' in window) && window['localStorage'] !== null) {
-
+	check_schema();
 	$("#tabs").tabs();
-	transmitters = load_transmitters(getvar('transmitters', []));
-	antennas = load_antennas(getvar('antennas', []));
-	connections = load_connections(getvar('connections', []));
+	transmitters = load_transmitters();
+	antennas = load_antennas();
+	connections = load_connections();
 	page_init();
 	refresh();
 }
