@@ -199,7 +199,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			this.power = 100;
 			this.mod = modulation_duty_factor[0];
 			this.ce = 50;
-			this.ue = 50;
+			this.ue = 100;
 		}
 		return true;
 	};
@@ -721,8 +721,26 @@ function Connection(conn_data) {
 		var tm = this.transmitter;
 		var ant = this.antenna;
 		ret = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
-		ret += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th class="left-border" colspan="4">Controlled Exposure</th><th class="left-border" colspan="4">Uncontrolled Exposure</th></tr>\n';
-		ret += '<tr><th class="left-border">MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th class="left-border">MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
+		ret += '<table class="results"><tr>';
+		ret += '<th rowspan="2">Band</th>';
+		ret += '<th rowspan="2" title="Power = power from transmitter for this band">Power (W)</th>';
+		ret += '<th rowspan="2" title="Line Losses = loss/ft * line length">Line Losses (dB)</th>';
+		ret += '<th rowspan="2" title="Total Gain = antenna gain - (tuner loss + line loss + other loss)">Total Gain (dB)</th>';
+		ret += '<th rowspan="2" title="EIRP = total gain * power">EIRP (W)</th>';
+		ret += '<th class="left-border" colspan="5">Controlled Exposure (6 minute window)</th>';
+		ret += '<th class="left-border" colspan="5">Uncontrolled Exposure (30 minute window)</th>';
+		ret += '</tr>\n<tr>';
+		ret += '<th class="left-border" title="Time Ave Power = EIRP * modulation duty factor * controlled exposure factor">Time Ave Power (W)</th>';
+		ret += '<th title="Maximum Permissible Exposure as specified by the FCC">MPE (mW/cm<sup>2</sup>)</th>';
+		ret += '<th title="RF Exposure as calculated for this scenario">RF Exposure (mW/cm<sup>2</sup>)</th>';
+		ret += '<th title="Minimum distance to antenna to be within compliance">Minimum Distance (ft)</th>';
+		ret += '<th>Distance OK</th>';
+		ret += '<th class="left-border" title="Time Ave Power = EIRP * modulation duty factor * uncontrolled exposure factor">Time Ave Power (W)</th>';
+		ret += '<th title="Maximum Permissible Exposure as specified by the FCC">MPE (mW/cm<sup>2</sup>)</th>';
+		ret += '<th title="RF Exposure as calculated for this scenario">RF Exposure (mW/cm<sup>2</sup>)</th>';
+		ret += '<th title="Minimum distance to antenna to be within compliance">Minimum Distance (ft)</th>';
+		ret += '<th>Distance OK</th>';
+		ret += '</tr>\n';
 		var bands_rendered = 0;
 		for (var b in Bands) {
 			if (!(b in tm.bands) || ant.bands[b] == null) continue;
@@ -735,23 +753,26 @@ function Connection(conn_data) {
 				line_loss = 0;
 			}
 			var tloss = this.tuner_loss + this.other_loss + line_loss;
+			var tlossdb = -tloss + ant.bands[b].gain;
 			tloss = Math.pow(10, -(tloss/10.0));
 			var gain = Math.pow(10, ant.bands[b].gain/10.0);
 			ret += '<tr class="res-row">';
 			// calculate rfe/mpe/mdx for transmitter power at band with connection losses
 			ce = calc_exposure(true, band.power, modulation_duty_factor[band.mod]/100.0, band.ce/100.0, tloss, gain, freq, ant.cdx*cm_per_foot, ant.ground);
 			ue = calc_exposure(false, band.power, modulation_duty_factor[band.mod]/100.0, band.ue/100.0, tloss, gain, freq, ant.udx*cm_per_foot, ant.ground);
-			ret += '<td class="nowrap">'+b+'</td><td>'+band.power+'</td><td>'+this.tuner_loss+'</td>';
-			ret += '<td>'+line_loss.toPrecision(4)+'</td><td>'+this.other_loss+'</td>';
-			ret += '<td>'+ant.bands[b].gain.toPrecision(4)+'</td>';
+			ret += '<td class="nowrap">'+b+'</td><td>'+band.power+'</td>';
+			ret += '<td>'+line_loss.toPrecision(4)+'</td>';
+			ret += '<td>'+tlossdb.toPrecision(4)+'</td>';
 			ret += '<td>'+(band.power*tloss*gain).toPrecision(4)+'</td>';
 			// controlled exposure
-			ret += '<td class="left-border">'+ce.mpe.toPrecision(4)+'</td>';
+			ret += '<td class="left-border">'+ce.avgp.toPrecision(4)+'</td>';
+			ret += '<td>'+ce.mpe.toPrecision(4)+'</td>';
 			ret += '<td>'+ce.rfe.toPrecision(4)+'</td>';
 			ret += '<td>'+(ce.mdx/cm_per_foot).toPrecision(4)+'</td>';
 			ret += '<td class="'+(ce.rfe < ce.mpe ? '':'non')+'compliant">'+(ce.rfe < ce.mpe ? 'Yes':'No')+'</td>';
 			// uncontrolled exposure
-			ret += '<td class="left-border">'+ue.mpe.toPrecision(4)+'</td>';
+			ret += '<td class="left-border">'+ue.avgp.toPrecision(4)+'</td>';
+			ret += '<td>'+ue.mpe.toPrecision(4)+'</td>';
 			ret += '<td>'+ue.rfe.toPrecision(4)+'</td>';
 			ret += '<td>'+(ue.mdx/cm_per_foot).toPrecision(4)+'</td>';
 			ret += '<td class="'+(ue.rfe < ue.mpe ? '':'non')+'compliant">'+(ue.rfe < ue.mpe ? 'Yes':'No')+'</td>';
@@ -1365,19 +1386,22 @@ function calc_mpe(frequency, controlled) {
 */
 function calc_exposure(controlled, watts, tdc, winave, tloss, gain, freq, dx, ground) {
 	//console.log('calc_exposure('+controlled+', '+watts+', '+tdc+', '+winave+', '+tloss+', '+gain+', '+freq+', '+dx+', '+ground);
-	var power = tdc * tloss * watts * 1000 * winave * gain;
+	var power_w = tdc * tloss * watts * winave * gain;
+	var power_mw = power_w * 1000;
 	var rfe, mpe, mdx;
-	if ((power > 0) && (dx > 0)) {
-		if (ground)
-			gf = 0.64;
-		else
-			gf = 0.25;
-		rfe = (gf * power) / (Math.PI * Math.pow(dx,2));
+	if ((power_mw > 0) && (dx > 0)) {
+		if (ground) {
+			// EPA model says 1.6 times field strength or 1.6*1.6 power density factor
+			gf = 2.56;
+		} else {
+			gf = 1;
+		}
+		rfe = (gf * power_mw) / (4 *Math.PI * Math.pow(dx,2));
 		mpe = calc_mpe(freq, controlled);
-		mdx = Math.sqrt((gf * power)/(mpe * Math.PI));
+		mdx = Math.sqrt((gf * power_mw)/(mpe * Math.PI));
 	}
 	//console.log("{rfe:"+rfe+", mpe:"+mpe+", mdx:"+mdx+"}");
-	return {rfe:rfe, mpe:mpe, mdx:mdx};
+	return {avgp:power_w, rfe:rfe, mpe:mpe, mdx:mdx};
 }
 function hide_elements(ele) {
 	$(ele).children().filter('.action-box').hide();
