@@ -60,14 +60,27 @@ table td {
 table.results {
 	border: 1px solid;
 	font-size: 80%;
+	border-collapse: collapse;
 }
-table.results td, table.results th {
-	border: 1px solid gray;
+table.results th {
+	border-bottom: 1px solid gray;
+	padding: 0.1em 0.5em 0em 0.5em;
+	background-color: #d0d0d0;
 }
 table.results td {
-	padding: .1em .5em 0em .5em;
+	border-bottom: 1px solid gray;
+	padding: 0.1em 0.5em 0em 0.5em;
 }
-label::after {
+table.results tr.res-row:hover {
+	background-color: #e0e0e0;
+}
+.nowrap {
+	white-space: nowrap;
+}
+.left-border {
+	border-left: 1px solid gray;
+}
+label:after {
 	content: ": ";
 }
 a.add-a, a.edit-a, a.del-a {
@@ -554,7 +567,7 @@ function Antenna(name, ant_data) {
 	};
 
 	this.render = function() {
-		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> | <a class="link edit-a" id="edit-a-antenna-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-antenna-'+this.id+'">Delete</a></div><h4>'+this.name+'</h4>\nDistances: Controlled exposure@'+this.cdx+'ft, Uncontrolled exposure@'+this.udx+'ft; Ground:'+this.ground+'\n<table width="100%">';
+		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> | <a class="link edit-a" id="edit-a-antenna-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-antenna-'+this.id+'">Delete</a></div><h4>'+this.name+'</h4>\nControlled exposure: '+this.cdx+'ft, Uncontrolled exposure: '+this.udx+'ft, Ground reflections: '+this.ground+'\n<table width="100%">';
 		out += '<tr><th width="15%">Band</th><th width="15%">Gain (dBi)</th><th></th></tr>\n';
 		for (var band in Bands) {
 			if (!(band in this.bands)) continue;
@@ -708,8 +721,8 @@ function Connection(conn_data) {
 		var tm = this.transmitter;
 		var ant = this.antenna;
 		ret = '<h3>\''+tm.name+'\' to \''+ant.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h3><div>Controlled distance: '+ant.cdx+' ft., Uncontrolled distance: '+ant.udx+' ft</div>';
-		ret += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th colspan="4">Controlled Exposure</th><th colspan="4">Uncontrolled Exposure</th></tr>\n';
-		ret += '<tr><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th>MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
+		ret += '<table class="results"><tr><th rowspan="2">Band</th><th rowspan="2">Power (W)</th><th rowspan="2">Tuner Losses (dB)</th><th rowspan="2">Line Losses (dB)</th><th rowspan="2">Other Losses (dB)</th><th rowspan="2">Antenna Gain (dBi)</th><th rowspan="2">Power at Antenna (W)</th><th class="left-border" colspan="4">Controlled Exposure</th><th class="left-border" colspan="4">Uncontrolled Exposure</th></tr>\n';
+		ret += '<tr><th class="left-border">MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th><th class="left-border">MPE (mW/cm<sup>2</sup>)</th><th>RF Exposure (mW/cm<sup>2</sup>)</th><th>Minimum Distance (ft)</th><th>Distance OK</th></tr>\n';
 		var bands_rendered = 0;
 		for (var b in Bands) {
 			if (!(b in tm.bands) || ant.bands[b] == null) continue;
@@ -724,21 +737,21 @@ function Connection(conn_data) {
 			var tloss = this.tuner_loss + this.other_loss + line_loss;
 			tloss = Math.pow(10, -(tloss/10.0));
 			var gain = Math.pow(10, ant.bands[b].gain/10.0);
-			ret += '<tr>';
+			ret += '<tr class="res-row">';
 			// calculate rfe/mpe/mdx for transmitter power at band with connection losses
 			ce = calc_exposure(true, band.power, modulation_duty_factor[band.mod]/100.0, band.ce/100.0, tloss, gain, freq, ant.cdx*cm_per_foot, ant.ground);
 			ue = calc_exposure(false, band.power, modulation_duty_factor[band.mod]/100.0, band.ue/100.0, tloss, gain, freq, ant.udx*cm_per_foot, ant.ground);
-			ret += '<td>'+b+'</td><td>'+band.power+'</td><td>'+this.tuner_loss+'</td>';
+			ret += '<td class="nowrap">'+b+'</td><td>'+band.power+'</td><td>'+this.tuner_loss+'</td>';
 			ret += '<td>'+line_loss.toPrecision(4)+'</td><td>'+this.other_loss+'</td>';
 			ret += '<td>'+ant.bands[b].gain.toPrecision(4)+'</td>';
 			ret += '<td>'+(band.power*tloss*gain).toPrecision(4)+'</td>';
 			// controlled exposure
-			ret += '<td>'+ce.mpe.toPrecision(4)+'</td>';
+			ret += '<td class="left-border">'+ce.mpe.toPrecision(4)+'</td>';
 			ret += '<td>'+ce.rfe.toPrecision(4)+'</td>';
 			ret += '<td>'+(ce.mdx/cm_per_foot).toPrecision(4)+'</td>';
 			ret += '<td class="'+(ce.rfe < ce.mpe ? '':'non')+'compliant">'+(ce.rfe < ce.mpe ? 'Yes':'No')+'</td>';
 			// uncontrolled exposure
-			ret += '<td>'+ue.mpe.toPrecision(4)+'</td>';
+			ret += '<td class="left-border">'+ue.mpe.toPrecision(4)+'</td>';
 			ret += '<td>'+ue.rfe.toPrecision(4)+'</td>';
 			ret += '<td>'+(ue.mdx/cm_per_foot).toPrecision(4)+'</td>';
 			ret += '<td class="'+(ue.rfe < ue.mpe ? '':'non')+'compliant">'+(ue.rfe < ue.mpe ? 'Yes':'No')+'</td>';
