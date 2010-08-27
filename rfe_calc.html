@@ -830,7 +830,7 @@ function connection_idx_from_transmitter(name) {
 	conns = [];
 	for (var c in connections) {
 		var t = connections[c].transmitter;
-		console.log('compare "'+name+'" to "'+t.name+'"');
+		//console.log('compare "'+name+'" to "'+t.name+'"');
 		if (t.name == name) {
 			console.log('found connection: '+connections[c].name);
 			conns.push(c);
@@ -843,7 +843,7 @@ function connection_idx_from_antenna(name) {
 	conns = [];
 	for (var c in connections) {
 		var a = connections[c].antenna;
-		console.log('compare "'+name+'" to "'+a.name+'"');
+		//console.log('compare "'+name+'" to "'+a.name+'"');
 		if (a.name == name) {
 			console.log('found connection: '+connections[c].name);
 			conns.push(c);
