@@ -368,11 +368,30 @@ function Transmitter(init_data) {
 	};
 
 	this.render = function() {
-		var out = '<div class="transmitter action-popup"><div class="action-box"><a class="link add-a" id="add-a-tband-'+this.id+'">Add a band</a> | <a class="link edit-a" id="edit-a-xmtr-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-xmtr-'+this.id+'">Delete</a></div><h4>'+this.name+'</h4>\n<table width="100%">';
-		out += '<tr><th width="15%">Band</th><th width="15%">Power (W)</th><th width="30%">Modulation</th><th>Controlled<br/>exposure (%)</th><th>Uncontrolled<br/>exposure (%)</th><th></th></tr>\n';
+		var out = '<div class="transmitter action-popup"><div class="action-box">';
+		out += '<a class="link add-a" id="add-a-tband-'+this.id+'">Add a band</a> | ';
+		out += '<a class="link edit-a" id="edit-a-xmtr-'+this.id+'">Edit</a> |';
+		out += '<a class="link del-a" id="del-a-xmtr-'+this.id+'">Delete</a>';
+		out += '</div>';
+		out += '<h4>'+this.name+'</h4>\n<table width="100%"><tr>';
+		out += '<th width="15%">Band</th>';
+		out += '<th width="15%">Power (W)</th>';
+		out += '<th width="30%">Modulation</th>';
+		out += '<th>Controlled<br/>exposure (%)</th>';
+		out += '<th>Uncontrolled<br/>exposure (%)</th>';
+		out += '<th></th>';
+		out += '</tr>\n';
 		for (var band in Bands) {
 			if (!(band in this.bands)) continue;
-			out += '<tr><td>'+band+'</td><td>'+this.bands[band].power+'</td><td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td><td>'+this.bands[band].ce+'</td><td>'+this.bands[band].ue+'</td><td class="action-box"><a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-tband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
+			out += '<tr><td>'+band+'</td>';
+			out += '<td>'+this.bands[band].power+'</td>';
+			out += '<td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td>';
+			out += '<td>'+this.bands[band].ce+'</td>';
+			out += '<td>'+this.bands[band].ue+'</td>';
+			out += '<td class="action-box">';
+			out += '<a class="link edit-a" id="edit-a-tband-'+this.id+'-'+band+'">Edit</a> |';
+			out += '<a class="link del-a" id="del-a-tband-'+this.id+'-'+band+'">Delete</a>';
+			out += '</td></tr>\n';
 		}
 		if (array_size(this.bands) == 0) {
 			var msg = 'This transmitter does not yet have bands defined.  Please click on "Add a band".';
@@ -567,11 +586,25 @@ function Antenna(name, ant_data) {
 	};
 
 	this.render = function() {
-		var out = '<div class="antenna action-popup"><div class="action-box"><a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> | <a class="link edit-a" id="edit-a-antenna-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-antenna-'+this.id+'">Delete</a></div><h4>'+this.name+'</h4>\nControlled exposure: '+this.cdx+'ft, Uncontrolled exposure: '+this.udx+'ft, Ground reflections: '+this.ground+'\n<table width="100%">';
-		out += '<tr><th width="15%">Band</th><th width="15%">Gain (dBi)</th><th></th></tr>\n';
+		var out = '<div class="antenna action-popup"><div class="action-box">';
+		out += '<a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> |';
+		out += '<a class="link edit-a" id="edit-a-antenna-'+this.id+'">Edit</a> |';
+		out += '<a class="link del-a" id="del-a-antenna-'+this.id+'">Delete</a>';
+		out += '</div>';
+		out += '<h4>'+this.name+'</h4>\n';
+		out += 'Controlled exposure: '+this.cdx+'ft, Uncontrolled exposure: '+this.udx+'ft, Ground reflections: '+this.ground+'\n';
+		out += '<table width="100%"><tr>';
+		out += '<th width="15%">Band</th>';
+		out += '<th width="15%">Gain (dBi)</th>';
+		out += '<th></th></tr>\n';
 		for (var band in Bands) {
 			if (!(band in this.bands)) continue;
-			out += '<tr><td>'+band+'</td><td>'+this.bands[band].gain+'</td><td class="action-box"><a class="link edit-a" id="edit-a-aband-'+this.id+'-'+band+'">Edit</a> | <a class="link del-a" id="del-a-aband-'+this.id+'-'+band+'">Delete</a></td></td></tr>\n';
+			out += '<tr><td>'+band+'</td>';
+			out += '<td>'+this.bands[band].gain+'</td>';
+			out += '<td class="action-box">';
+			out += '<a class="link edit-a" id="edit-a-aband-'+this.id+'-'+band+'">Edit</a> |';
+			out += '<a class="link del-a" id="del-a-aband-'+this.id+'-'+band+'">Delete</a>';
+			out += '</td></tr>\n';
 		}
 		if (array_size(this.bands) == 0) {
 			var msg = 'This antenna does not yet have bands defined.  Please click on "Add a band".';
@@ -706,7 +739,12 @@ function Connection(conn_data) {
 	};
 
 	this.render = function() {
-		var out = '<div class="connection action-popup"><div class="action-box"><a class="link edit-a" id="edit-a-conn-'+this.id+'">Edit</a> | <a class="link del-a" id="del-a-conn-'+this.id+'">Delete</a></div><h4>\''+this.transmitter.name+'\' to \''+this.antenna.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h4>\n<ul>';
+		var out = '<div class="connection action-popup"><div class="action-box">';
+		out += '<a class="link edit-a" id="edit-a-conn-'+this.id+'">Edit</a> |';
+		out += '<a class="link del-a" id="del-a-conn-'+this.id+'">Delete</a>';
+		out += '</div>';
+		out += '<h4>\''+this.transmitter.name+'\' to \''+this.antenna.name+'\' via '+ this.length+' ft of \''+this.wire+'\'</h4>\n';
+		out += '<ul>';
 		out += '<li>Transmitter: '+this.transmitter.name+'</li>\n';
 		out += '<li>Antenna: '+this.antenna.name+'</li>\n';
 		out += '<li>Tuner losses: '+this.tuner_loss+'</li>\n';
