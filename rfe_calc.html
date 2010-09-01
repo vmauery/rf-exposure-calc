@@ -151,6 +151,10 @@ function log_err(msg, e) {
 	console.error(msg + ': '+e.stack);
 }
 
+function is_numeric(v) {
+	return !isNaN(v) && isFinite(v);
+}
+
 function array_size(arr) {
 	var ret = 0;
 	for (var k in arr) {
@@ -215,10 +219,41 @@ function TransmitterBand(xmtr, band, bandinfo) {
 	/* member functions */
 	this.save = function() {
 		var band = $('#edit-tband-band').attr('value');
-		var power = $('#edit-tband-power').attr('value');
+		var power = parseFloat($('#edit-tband-power').attr('value'));
 		var mod = $('#edit-tband-mod').attr('value');
-		var ce = $('#edit-tband-ce').attr('value');
-		var ue = $('#edit-tband-ue').attr('value');
+		var ce = parseFloat($('#edit-tband-ce').attr('value'));
+		var ue = parseFloat($('#edit-tband-ue').attr('value'));
+		var msg;
+		if (!is_numeric(power) || power <= 0) {
+			if (!is_numeric(power))
+				msg = 'Transmitter power must be numeric';
+			else
+				msg = 'Transmitter power must be > 0';
+			form_message($('#tband-editor-msg'),
+				msg, $('#edit-tband-power')
+			);
+			return false;
+		}
+		if (!is_numeric(ce) || (ce <= 0 || ce > 100)) {
+			if (!is_numeric(ce))
+				msg = 'Controlled exposure must be numeric';
+			else
+				msg = 'Controlled exposure must be between 1 and 100%';
+			form_message($('#tband-editor-msg'),
+				msg, $('#edit-tband-ce')
+			);
+			return false;
+		}
+		if (!is_numeric(ue) || (ue <= 0 || ue > 100)) {
+			if (!is_numeric(ue))
+				msg = 'Uncontrolled exposure must be numeric';
+			else
+				msg = 'Uncontrolled exposure must be between 1 and 100%';
+			form_message($('#tband-editor-msg'),
+				msg, $('#edit-tband-ue')
+			);
+			return false;
+		}
 		console.log('saving '+this.band+' tband, power: '+power+', modulation: '+mod+', cont exp: '+ce+', uncont exp: '+ue);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
@@ -447,6 +482,13 @@ function AntennaBand(ant, band, gain) {
 	this.save = function() {
 		var band = $('#edit-aband-band').attr('value');
 		var gain = parseFloat($('#edit-aband-gain').attr('value'));
+		if (!is_numeric(gain)) {
+			form_message($('#aband-editor-msg'),
+				'Gain must be numeric',
+				$('#edit-aband-gain')
+			);
+			return false;
+		}
 		console.log('saving '+band+' aband, gain: '+gain);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
@@ -549,8 +591,8 @@ function Antenna(name, ant_data) {
 
 	this.save = function() {
 		var name = $('#edit-antenna-name').attr('value');
-		var cdx = $('#edit-antenna-cdx').attr('value');
-		var udx = $('#edit-antenna-udx').attr('value');
+		var cdx = parseFloat($('#edit-antenna-cdx').attr('value'));
+		var udx = parseFloat($('#edit-antenna-udx').attr('value'));
 		var ground = $('#edit-antenna-ground').attr('value');
 		ground = (ground == 'false')?false:true;
 		var samename = antenna_by_name(name);
@@ -558,6 +600,27 @@ function Antenna(name, ant_data) {
 			form_message($('#antenna-editor-msg'),
 				'Antenna names must be unique',
 				$('#edit-antenna-name')
+			);
+			return false;
+		}
+		var msg;
+		if (!is_numeric(cdx) || cdx <= 0) {
+			if (!is_numeric(cdx))
+				msg = 'Controlled distance must be numeric';
+			else
+				msg = 'Controlled distance must be > 0';
+			form_message($('#antenna-editor-msg'),
+				msg, $('#edit-antenna-cdx')
+			);
+			return false;
+		}
+		if (!is_numeric(udx) || udx <= 0) {
+			if (!is_numeric(udx))
+				msg = 'Uncontrolled distance must be numeric';
+			else
+				msg = 'Uncontrolled distance must be > 0';
+			form_message($('#antenna-editor-msg'),
+				msg, $('#edit-antenna-udx')
 			);
 			return false;
 		}
@@ -693,6 +756,31 @@ function Connection(conn_data) {
 		var wlen = parseFloat($('#edit-conn-wlen').attr('value'));
 		var other = parseFloat($('#edit-conn-other').attr('value'));
 		var name = xmtr.name + ' <-> ' + ant.name;
+		var msg;
+		if (!is_numeric(tloss)) {
+			form_message($('#conn-editor-msg'),
+				'Tuner losses must be numeric',
+				$('#edit-conn-tloss')
+			);
+			return false;
+		}
+		if (!is_numeric(wlen) || wlen <= 0) {
+			if (!is_numeric(wlen))
+				msg = 'Wire length must be numeric';
+			else
+				msg = 'Wire length must be > 0';
+			form_message($('#conn-editor-msg'),
+				msg, $('#edit-conn-wlen')
+			);
+			return false;
+		}
+		if (!is_numeric(other)) {
+			form_message($('#conn-editor-msg'),
+				'Other losses must be numeric',
+				$('#edit-conn-other')
+			);
+			return false;
+		}
 		console.log('saving "'+name+'": tloss: '+tloss+', wire: '+wire+', length: '+wlen+', other: '+other);
 		tt = this.transmitter;
 		tid = this.transmitter?this.transmitter.id:0;
