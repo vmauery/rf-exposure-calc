@@ -147,6 +147,10 @@ if (!window.console) {
 
 const cm_per_foot = 30.48;
 
+function log_err(msg, e) {
+	console.error(msg + ': '+e.stack);
+}
+
 function array_size(arr) {
 	var ret = 0;
 	for (var k in arr) {
@@ -1015,26 +1019,6 @@ function del_a_thing(ele) {
 	refresh();
 }
 
-function post_render() {
-	$(".link").filter(".add-a").unbind('click').click(function() {
-			add_a_thing(this);
-	});
-	$(".link").filter(".del-a").unbind('click').click(function() {
-			del_a_thing(this);
-	});
-	$(".link").filter(".edit-a").unbind('click').click(function() {
-			edit_a_thing(this);
-	});
-	$(".link").filter("#reset-data").unbind('click').click(function() {
-		console.log('resetting data');
-		reset_data_store();
-	});
-	var prot = ["&#109;", "&#97;", "&#105;", "&#108;", "&#116;", "&#111;", "&#58;"].join('');
-	var addr = ["&#110;", "&#55;", "&#111;", "&#104;", "&#64;", "&#97;", "&#114;", "&#114;", "&#108;", "&#46;", "&#110;", "&#101;", "&#116;"];
-	addr = addr.join('');
-	$("#contact").replaceWith('<a href="'+prot+addr+'">'+addr+'</a>');
-}
-
 var wires = {
 	'RG-8X': {'160m':0.349, '80m':0.656, '60m':0.809, '40m':0.931, '30m':1.116, '20m':1.352, '17m':1.507, '15m':1.631, '12m':1.855, '10m':1.890, '6m':2.55, '2m':4.458,},
 	'RG-213/U': {'160m':0.192, '80m':0.361, '60m':0.446, '40m':0.514, '30m':0.616, '20m':0.732, '17m':0.833, '15m':0.901, '12m':1.026, '10m':1.045, '6m':1.413, '2m':2.482, },
@@ -1161,55 +1145,11 @@ function load_connections(conn_data) {
 	return c;
 }
 
-function reset_data_store() {
-	if ((array_size(transmitters) ||
-		array_size(antennas) ||
-		array_size(connections)) &&
-		!confirm('This cannot be undone.\nReplace all transmitter/antenna/connection data?')) {
-			return;
-	}
-	var ltransmitters = {
-		// Transmitter(name, bands)
-		//band info is [power, duty cycle, win_c, win_u]
-		'IC-7000':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB: medium processing', 50, 50], '40m':[100, 'SSB: medium processing', 50, 50], '30m':[100, 'SSB: medium processing', 50, 50], '20m':[100, 'SSB: medium processing', 50, 50], '17m':[100, 'SSB: medium processing', 50, 50], '15m':[100, 'SSB: medium processing', 50, 50], '12m':[100, 'SSB: medium processing', 50, 50], '10m':[100, 'SSB: medium processing', 50, 30], '6m':[100, 'FM', 50, 50], '2m':[50, 'FM', 50, 50], '440 MHz':[30, 'FM', 50, 50]},
-		'Elecraft K3/100':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB: medium processing', 50, 50], '40m':[100, 'SSB: medium processing', 50, 50], '30m':[100, 'SSB: medium processing', 50, 50], '20m':[100, 'SSB: medium processing', 50, 50], '17m':[100, 'SSB: medium processing', 50, 50], '15m':[100, 'SSB: medium processing', 50, 50], '12m':[100, 'SSB: medium processing', 50, 50], '10m':[100, 'SSB: medium processing', 50, 30]},
-		'IC-92AD':{'2m':[5, 'FM', 50, 50], '440 MHz':[5, 'FM', 50, 50]},
-	};
-	var lantennas = {
-		// Antenna(name, bands, cdx, udx, ground)
-		'Center-fed Zepp':[{'80m':1.9, '60m':2.0, '40m':2.5, '30m':3.1, '20m':3.1, '17m':3.1, '15m':3.1, '12m':3.2, '10m':3.2,}, 18, 16, true],
-		'6/2/440 collinear':[{'6m':3.07, '2m':8.3, '440 MHz':11.7}, 6, 15, true],
-		'2/440 collinear':[{'2m':3.76, '440 MHz':4.32}, 1, 50, true],
-		'2/440 dipole':[{'2m':2.2, '440 MHz':3.02}, 1, 50, true],
-	};
-	var lconnections = [
-		// Connection(transmitter, antenna, tuner_loss, wire, length, other_loss)
-		['Elecraft K3/100', 'Center-fed Zepp', 0.1, 'LL-400', 150, 0.2],
-		['IC-7000', 'Center-fed Zepp', 0.1, 'RG-8X', 150, 0.2],
-		['IC-7000', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
-		['IC-92AD', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
-		['IC-92AD', '2/440 collinear', 0.0, 'LL-400', 30.0, 0.0],
-		['IC-92AD', '2/440 dipole', 0.0, 'LL-400', 30.0, 0.0],
-		];
-	setvar('antennas', lantennas);
-	setvar('transmitters', ltransmitters);
-	setvar('connections', lconnections);
-	setvar('schema', SCHEMA);
-	/*
-	// this only makes sense if we are not reloading the window
-	transmitters = load_transmitters();
-	antennas = load_antennas();
-	connections = load_connections();
-	refresh();
-	*/
-	window.location.reload(true);
-}
-
 function page_init() {
 	$('#eximport-import').unbind('click').click(import_data);
 	$('#eximport-export').unbind('click').click(export_data);
 	$('#eximport-reset').unbind('click').click(reset_data);
-	$('#eximport-sample').unbind('click').click(reset_data_store);
+	$('#eximport-sample').unbind('click').click(reset_data_sample);
 	$('.hideme').hide();
 	// set up the modal dialogs
 	$('#tband-editor').dialog({
@@ -1263,10 +1203,47 @@ function page_init() {
 			form_message($('#conn-editor-msg'));
 		}
 	});
+	$('#editor-forms').remove();
 }
 
-function log_err(msg, e) {
-	console.error(msg + ': '+e.stack);
+function do_interactive() {
+	$('.action-popup').hover(function() {
+		$(this).find('.action-box').show();
+	}, function() {
+		$(this).find('.action-box').hide();
+	});
+	$('.link').filter('.help').unbind('click').click(function() {
+		var m = $(this).attr('id').split('-');
+		var type = m[1];
+		$('#help-'+type).hide();
+		$('#help-text-'+type).slideDown(250);
+	});
+	$('.link').filter('.help-hide').unbind('click').click(function() {
+		var m = $(this).attr('id').split('-');
+		var type = m[2];
+		$('#help-text-'+type).slideUp(250, function() {
+			$('#help-'+type).show();
+		});
+	});
+}
+function post_render() {
+	$(".link").filter(".add-a").unbind('click').click(function() {
+			add_a_thing(this);
+	});
+	$(".link").filter(".del-a").unbind('click').click(function() {
+			del_a_thing(this);
+	});
+	$(".link").filter(".edit-a").unbind('click').click(function() {
+			edit_a_thing(this);
+	});
+	$(".link").filter("#reset-data").unbind('click').click(function() {
+		console.log('resetting data');
+		reset_data_store();
+	});
+	var prot = ["&#109;", "&#97;", "&#105;", "&#108;", "&#116;", "&#111;", "&#58;"].join('');
+	var addr = ["&#110;", "&#55;", "&#111;", "&#104;", "&#64;", "&#97;", "&#114;", "&#114;", "&#108;", "&#46;", "&#110;", "&#101;", "&#116;"];
+	addr = addr.join('');
+	$("#contact").replaceWith('<a href="'+prot+addr+'">'+addr+'</a>');
 }
 
 function refresh(mask_errors) {
@@ -1338,6 +1315,50 @@ function show_results() {
 	}
 // | transmitter | power | band | tuner losses | line losses | other losses | rfe | mpe | mdx | ok
 }
+function reset_data_sample() {
+	if ((array_size(transmitters) ||
+		array_size(antennas) ||
+		array_size(connections)) &&
+		!confirm('This cannot be undone.\nReplace all transmitter/antenna/connection data?')) {
+			return;
+	}
+	var ltransmitters = {
+		// Transmitter(name, bands)
+		//band info is [power, duty cycle, win_c, win_u]
+		'IC-7000':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB: medium processing', 50, 50], '40m':[100, 'SSB: medium processing', 50, 50], '30m':[100, 'SSB: medium processing', 50, 50], '20m':[100, 'SSB: medium processing', 50, 50], '17m':[100, 'SSB: medium processing', 50, 50], '15m':[100, 'SSB: medium processing', 50, 50], '12m':[100, 'SSB: medium processing', 50, 50], '10m':[100, 'SSB: medium processing', 50, 30], '6m':[100, 'FM', 50, 50], '2m':[50, 'FM', 50, 50], '440 MHz':[30, 'FM', 50, 50]},
+		'Elecraft K3/100':{'160m':[100, 'CW', 50, 50], '80m':[100, 'CW', 50, 50], '60m':[50, 'SSB: medium processing', 50, 50], '40m':[100, 'SSB: medium processing', 50, 50], '30m':[100, 'SSB: medium processing', 50, 50], '20m':[100, 'SSB: medium processing', 50, 50], '17m':[100, 'SSB: medium processing', 50, 50], '15m':[100, 'SSB: medium processing', 50, 50], '12m':[100, 'SSB: medium processing', 50, 50], '10m':[100, 'SSB: medium processing', 50, 30]},
+		'IC-92AD':{'2m':[5, 'FM', 50, 50], '440 MHz':[5, 'FM', 50, 50]},
+	};
+	var lantennas = {
+		// Antenna(name, bands, cdx, udx, ground)
+		'Center-fed Zepp':[{'80m':1.9, '60m':2.0, '40m':2.5, '30m':3.1, '20m':3.1, '17m':3.1, '15m':3.1, '12m':3.2, '10m':3.2,}, 18, 16, true],
+		'6/2/440 collinear':[{'6m':3.07, '2m':8.3, '440 MHz':11.7}, 6, 15, true],
+		'2/440 collinear':[{'2m':3.76, '440 MHz':4.32}, 1, 50, true],
+		'2/440 dipole':[{'2m':2.2, '440 MHz':3.02}, 1, 50, true],
+	};
+	var lconnections = [
+		// Connection(transmitter, antenna, tuner_loss, wire, length, other_loss)
+		['Elecraft K3/100', 'Center-fed Zepp', 0.1, 'LL-400', 150, 0.2],
+		['IC-7000', 'Center-fed Zepp', 0.1, 'RG-8X', 150, 0.2],
+		['IC-7000', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
+		['IC-92AD', '6/2/440 collinear', 0.0, 'LL-400', 150, 0.2],
+		['IC-92AD', '2/440 collinear', 0.0, 'LL-400', 30.0, 0.0],
+		['IC-92AD', '2/440 dipole', 0.0, 'LL-400', 30.0, 0.0],
+		];
+	setvar('antennas', lantennas);
+	setvar('transmitters', ltransmitters);
+	setvar('connections', lconnections);
+	setvar('schema', SCHEMA);
+	/*
+	// this only makes sense if we are not reloading the window
+	transmitters = load_transmitters();
+	antennas = load_antennas();
+	connections = load_connections();
+	refresh();
+	*/
+	window.location.reload(true);
+}
+
 function reset_data() {
 	if ((array_size(transmitters) ||
 		array_size(antennas) ||
@@ -1463,29 +1484,6 @@ function calc_exposure(controlled, watts, tdc, winave, tloss, gain, freq, dx, gr
 	}
 	//console.log("{rfe:"+rfe+", mpe:"+mpe+", mdx:"+mdx+"}");
 	return {avgp:power_w, rfe:rfe, mpe:mpe, mdx:mdx};
-}
-function hide_elements(ele) {
-	$(ele).children().filter('.action-box').hide();
-}
-function do_interactive() {
-	$('.action-popup').hover(function() {
-		$(this).find('.action-box').show();
-	}, function() {
-		$(this).find('.action-box').hide();
-	});
-	$('.link').filter('.help').unbind('click').click(function() {
-		var m = $(this).attr('id').split('-');
-		var type = m[1];
-		$('#help-'+type).hide();
-		$('#help-text-'+type).slideDown(250);
-	});
-	$('.link').filter('.help-hide').unbind('click').click(function() {
-		var m = $(this).attr('id').split('-');
-		var type = m[2];
-		$('#help-text-'+type).slideUp(250, function() {
-			$('#help-'+type).show();
-		});
-	});
 }
 function delvar(name) {
 	window.localStorage.removeItem('rfe.'+name);
@@ -1811,7 +1809,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 	along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p></tt>
 	</div>
 </div>
-<div class="initial-noshow">
+<div id="editor-forms" class="initial-noshow">
 <div id="xmtr-editor">
 	<div id="xmtr-editor-msg" class="form-error"></div>
 	<div class="edit-item">
