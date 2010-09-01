@@ -307,9 +307,11 @@ function Transmitter(init_data) {
 
 	this.fini = function() {
 		var bands = {};
-		for (band in this.bands) {
-			var v = this.bands[band].fini();
-			bands[v[0]] = v[1];
+		for (band in Bands) {
+			if (band in this.bands) {
+				var v = this.bands[band].fini();
+				bands[v[0]] = v[1];
+			}
 		}
 		return [this.name, bands];
 	};
@@ -518,9 +520,11 @@ function Antenna(name, ant_data) {
 
 	this.fini = function() {
 		var bands = {};
-		for (band in this.bands) {
-			var v = this.bands[band].fini();
-			bands[v[0]] = v[1];
+		for (band in Bands) {
+			if (band in this.bands) {
+				var v = this.bands[band].fini();
+				bands[v[0]] = v[1];
+			}
 		}
 		return [this.name, [bands, this.cdx, this.udx, this.ground]];
 	};
