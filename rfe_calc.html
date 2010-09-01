@@ -214,11 +214,11 @@ function TransmitterBand(xmtr, band, bandinfo) {
 
 	/* member functions */
 	this.save = function() {
-		var band = $('#edit-tband-band').attr('value') || this.band;
-		var power = $('#edit-tband-power').attr('value') || this.power;
-		var mod = $('#edit-tband-mod').attr('value') || this.mod;
-		var ce = $('#edit-tband-ce').attr('value') || this.ce;
-		var ue = $('#edit-tband-ue').attr('value') || this.ue;
+		var band = $('#edit-tband-band').attr('value');
+		var power = $('#edit-tband-power').attr('value');
+		var mod = $('#edit-tband-mod').attr('value');
+		var ce = $('#edit-tband-ce').attr('value');
+		var ue = $('#edit-tband-ue').attr('value');
 		console.log('saving '+this.band+' tband, power: '+power+', modulation: '+mod+', cont exp: '+ce+', uncont exp: '+ue);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
