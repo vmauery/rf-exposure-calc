@@ -267,6 +267,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		$('#tband-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
+					TransmitterBand.reset_form_errors();
 					if (thing.save()) {
 						$(this).dialog('close');
 						if (next != null) {
@@ -284,6 +285,11 @@ function TransmitterBand(xmtr, band, bandinfo) {
 	};
 	return this.init(xmtr, band, bandinfo);
 }
+TransmitterBand.reset_form_errors = function() {
+	$('#edit-tband-power').removeClass('ui-state-error');
+	$('#edit-tband-ce').removeClass('ui-state-error');
+	$('#edit-tband-ue').removeClass('ui-state-error');
+};
 TransmitterBand.common_id = 0;
 
 function Transmitter(init_data) {
@@ -357,6 +363,7 @@ function Transmitter(init_data) {
 		$('#xmtr-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
+					Transmitter.reset_form_errors();
 					if (thing.save()) {
 						$(this).dialog('close');
 						if (next != null) {
@@ -409,6 +416,9 @@ function Transmitter(init_data) {
 
 	return this.init(init_data);
 }
+Transmitter.reset_form_errors = function() {
+	$('#edit-xmtr-name').removeClass('ui-state-error');
+};
 Transmitter.common_id = 0;
 
 function transmitter_by_name(name) {
@@ -476,6 +486,7 @@ function AntennaBand(ant, band, gain) {
 		$('#aband-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
+					AntennaBand.reset_form_errors();
 					if (thing.save()) {
 						$(this).dialog('close');
 						if (next != null) {
@@ -493,6 +504,9 @@ function AntennaBand(ant, band, gain) {
 	};
 	return this.init(ant, band, gain);
 }
+AntennaBand.reset_form_errors = function() {
+	$('#edit-aband-gain').removeClass('ui-state-error');
+};
 AntennaBand.common_id = 0;
 
 // ant_data is [bands, cdx, udx, ground]
@@ -577,6 +591,7 @@ function Antenna(name, ant_data) {
 		$('#antenna-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
+					Antenna.reset_form_errors();
 					if (thing.save()) {
 						$(this).dialog('close');
 						if (next != null) {
@@ -624,6 +639,11 @@ function Antenna(name, ant_data) {
 
 	return this.init(name, ant_data);
 }
+Antenna.reset_form_errors = function() {
+	$('#edit-antenna-name').removeClass('ui-state-error');
+	$('#edit-antenna-cdx').removeClass('ui-state-error');
+	$('#edit-antenna-udx').removeClass('ui-state-error');
+};
 Antenna.common_id = 0;
 
 function antenna_by_name(name) {
@@ -730,6 +750,7 @@ function Connection(conn_data) {
 		$('#conn-editor').dialog('option', {
 			'buttons': {
 				'Save':function() {
+					Connection.reset_form_errors();
 					if (thing.save()) {
 						$(this).dialog('close');
 						if (next != null) {
@@ -856,6 +877,11 @@ function Connection(conn_data) {
 
 	return this.init(conn_data);
 }
+Connection.reset_form_errors = function() {
+	$('#edit-conn-tloss').removeClass('ui-state-error');
+	$('#edit-conn-wlen').removeClass('ui-state-error');
+	$('#edit-conn-other').removeClass('ui-state-error');
+};
 Connection.common_id = 0;
 
 function form_message(f, m, w) {
@@ -1161,9 +1187,7 @@ function page_init() {
 		width: '24em',
 		modal: true,
 		close: function() {
-			$('#edit-tband-power').removeClass('ui-state-error');
-			$('#edit-tband-ce').removeClass('ui-state-error');
-			$('#edit-tband-ue').removeClass('ui-state-error');
+			TransmitterBand.reset_form_errors();
 			form_message($('#tband-editor-msg'));
 		}
 	});
@@ -1172,7 +1196,7 @@ function page_init() {
 		width: '24em',
 		modal: true,
 		close: function() {
-			$('#edit-xmtr-name').removeClass('ui-state-error');
+			Transmitter.reset_form_errors();
 			form_message($('#xmtr-editor-msg'));
 		}
 	});
@@ -1181,7 +1205,7 @@ function page_init() {
 		width: '24em',
 		modal: true,
 		close: function() {
-			$('#edit-aband-gain').removeClass('ui-state-error');
+			AntennaBand.reset_form_errors();
 			form_message($('#aband-editor-msg'));
 		}
 	});
@@ -1190,9 +1214,7 @@ function page_init() {
 		width: '24em',
 		modal: true,
 		close: function() {
-			$('#edit-antenna-name').removeClass('ui-state-error');
-			$('#edit-antenna-cdx').removeClass('ui-state-error');
-			$('#edit-antenna-udx').removeClass('ui-state-error');
+			Antenna.reset_form_errors();
 			form_message($('#antenna-editor-msg'));
 		}
 	});
@@ -1201,9 +1223,7 @@ function page_init() {
 		width: '24em',
 		modal: true,
 		close: function() {
-			$('#edit-conn-tloss').removeClass('ui-state-error');
-			$('#edit-conn-wlen').removeClass('ui-state-error');
-			$('#edit-conn-other').removeClass('ui-state-error');
+			Connection.reset_form_errors();
 			form_message($('#conn-editor-msg'));
 		}
 	});
