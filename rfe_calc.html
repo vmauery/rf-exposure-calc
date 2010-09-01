@@ -199,7 +199,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			this.ce = bandinfo[2];
 			this.ue = bandinfo[3];
 		} else {
-			this.band = Bands[0];
+			this.band = '';
 			this.power = 100;
 			this.mod = modulation_duty_factor[0];
 			this.ce = 50;
@@ -244,7 +244,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 	this.editor = function(next) {
 		// set the title
 		var title;
-		if (this.name == "") {
+		if (this.band == "") {
 			title = 'Add a band on "'+this.xmtr.name+'"';
 		} else {
 			title = 'Edit '+this.band+' band  on "'+this.xmtr.name+'"';
@@ -422,7 +422,7 @@ function AntennaBand(ant, band, gain) {
 	this.init = function(ant, band, gain) {
 		this.id = AntennaBand.common_id++;
 		this.antenna = ant;
-		this.band = band;
+		this.band = band || '';
 		this.gain = gain || 2.15;
 		return true;
 	};
@@ -457,7 +457,7 @@ function AntennaBand(ant, band, gain) {
 	this.editor = function(next) {
 		// set the title
 		var title;
-		if (this.name == "") {
+		if (this.band == "") {
 			title = 'Add a band on "'+this.antenna.name+'"';
 		} else {
 			title = 'Edit '+this.band+' band  on "'+this.antenna.name+'"';
