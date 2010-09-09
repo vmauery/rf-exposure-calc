@@ -5,6 +5,8 @@
 # Don't show directory listings for URLs which map to a directory.
 Options -Indexes
 
+DirectoryIndex rfe_calc.html
+
 # Follow symbolic links in this directory.
 Options +FollowSymLinks
 
@@ -12,6 +14,6 @@ Options +FollowSymLinks
 <IfModule mod_rewrite.c>
   RewriteEngine on
   
-  RewriteCond %{HTTP_USER_AGENT} MSIE
+  RewriteCond %{HTTP_USER_AGENT} MSIE.[1234567]
   RewriteRule ^rfe_calc.html /radio/rfe/sorry_no_ie.html [L]
 </IfModule>
