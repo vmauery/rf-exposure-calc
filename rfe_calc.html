@@ -1595,7 +1595,7 @@ function calc_exposure(controlled, watts, tdc, winave, tloss, gain, freq, dx, gr
 		}
 		rfe = (gf * power_mw) / (4 *Math.PI * Math.pow(dx,2));
 		mpe = calc_mpe(freq, controlled);
-		mdx = Math.sqrt((gf * power_mw)/(mpe * Math.PI));
+		mdx = Math.sqrt((gf * power_mw)/(mpe * 4 * Math.PI));
 	}
 	//console.log("{rfe:"+rfe+", mpe:"+mpe+", mdx:"+mdx+"}");
 	return {avgp:power_w, rfe:rfe, mpe:mpe, mdx:mdx};
