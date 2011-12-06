@@ -145,7 +145,7 @@ if (!window.console) {
 	window.console.error = function() {};
 }
 
-const cm_per_foot = 30.48;
+cm_per_foot = 30.48;
 
 function log_err(msg, e) {
 	console.error(msg + ': '+e.stack);
@@ -1612,7 +1612,7 @@ function getvar(name, default_value) {
 		return default_value;
 	return JSON.parse(v);
 }
-const SCHEMA = 1;
+SCHEMA = 1;
 function update_schema(ver) {
 	switch (ver) {
 		case 1:
