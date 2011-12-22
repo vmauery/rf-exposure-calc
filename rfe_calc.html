@@ -13,7 +13,7 @@ License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with RFE_Calc.  If not, see <http://www.gnu.org/licenses/>.
 
-Copyright © 2009-2010, Vernon Mauery (N7OH)
+Copyright © 2009-2011, Vernon Mauery (N7OH)
 -->
 <html><head>
 <meta charset="UTF-8">
@@ -821,8 +821,10 @@ function Connection(conn_data) {
 		// set up the selects
 		var tid = this.transmitter?this.transmitter.id:null;
 		var aid = this.antenna?this.antenna.id:null;
-		var wire_keys = array_keys(wires);
-		wire_keys = array_zip(wire_keys, wire_keys);
+		var wire_keys = new Array();
+		for (wire in wires) {
+			wire_keys[wire] = wires[wire].name;
+		}
 		$('#edit-conn-xmtr').empty().append(select_options(this.xmtr_list(), tid));
 		$('#edit-conn-ant').empty().append(select_options(this.ant_list(), aid));
 		$('#edit-conn-wire').empty().append(select_options(wire_keys, this.wire));
@@ -901,12 +903,11 @@ function Connection(conn_data) {
 			if (!(b in tm.bands) || ant.bands[b] == null) continue;
 			bands_rendered++;
 			var band = tm.bands[b];
-			var freq = Bands[b][1];
-			var line_loss = (this.length/100.0)*wires[this.wire][b];
-			if (wires[this.wire][b] == null) {
-				console.error("Wire '"+this.wire+"' has no loss info at "+b);
-				line_loss = 0;
-			}
+			var freq = (Bands[b][1] + Bands[b][0])/2.0;
+			var freqmhz = freq / 1000000.0;
+			var mldb = (wires[this.wire].k1 * Math.sqrt(freqmhz) + wires[this.wire].k2 * freqmhz);
+			console.log('wire: '+this.wire+', freq: '+freqmhz+' MHz, mldb: '+mldb);
+			var line_loss = (this.length/100.0)*mldb;
 			var tloss = this.tuner_loss + this.other_loss + line_loss;
 			var tlossdb = -tloss + ant.bands[b].gain;
 			tloss = Math.pow(10, -(tloss/10.0));
@@ -1138,11 +1139,147 @@ function del_a_thing(ele) {
 }
 
 var wires = {
-	'RG-8X': {'160m':0.349, '80m':0.656, '60m':0.809, '40m':0.931, '30m':1.116, '20m':1.352, '17m':1.507, '15m':1.631, '12m':1.855, '10m':1.890, '6m':2.55, '2m':4.458,},
-	'RG-213/U': {'160m':0.192, '80m':0.361, '60m':0.446, '40m':0.514, '30m':0.616, '20m':0.732, '17m':0.833, '15m':0.901, '12m':1.026, '10m':1.045, '6m':1.413, '2m':2.482, },
-	'LL-400': {'160m':0.2, '80m':0.22, '60m':0.28, '40m':0.3, '30m':0.35, '20m':0.40, '17m':0.45, '15m':0.54, '12m':0.6, '10m':0.67, '6m':0.88, '2m':1.52, '220 MHz':1.86, '440 MHz':2.71, '900 MHz':3.9, },
-	'LL-600': {'160m':0.1, '80m':0.12, '60m':0.14, '40m':0.16, '30m':0.2, '20m':0.22, '17m':0.25, '15m':0.29, '12m':0.35, '10m':0.43, '6m':0.55, '2m':0.98, '220 MHz':1.19, '440 MHz':1.71, '900 MHz':2.5, },
-	'WM CQ 551': {'160m':0.02, '80m':0.04, '60m':0.06, '40m':0.08, '30m':0.08, '20m':0.10, '17m':0.12, '15m':0.12, '12m':0.13, '10m':0.14, '6m':0.15, '2m':0.35, },
+	'10D-FB': { 'name': '10D-FB', 'k1': 0.088544, 'k2': 0.000815, },
+	'12D-FB': { 'name': '12D-FB', 'k1': 0.077633, 'k2': 0.000511, },
+	'5D-FB': { 'name': '5D-FB', 'k1': 0.177820, 'k2': 0.001007, },
+	'7D-FB': { 'name': '7D-FB', 'k1': 0.115641, 'k2': 0.001003, },
+	'8D-FB': { 'name': '8D-FB', 'k1': 0.117744, 'k2': 0.000851, },
+	'AL5-50': { 'name': 'Andrew AL5-50', 'k1': 0.036515, 'k2': 0.000110, },
+	'AL7-50': { 'name': 'Andrew AL7-50', 'k1': 0.019065, 'k2': 0.000139, },
+	'C2FCP': { 'name': 'Andrew C2FCP', 'k1': 0.124115, 'k2': 0.000423, },
+	'C2FP': { 'name': 'Andrew C2FP', 'k1': 0.124084, 'k2': 0.000440, },
+	'CNT-100': { 'name': 'Andrew CNT-100', 'k1': 0.698602, 'k2': 0.001793, },
+	'CNT-195': { 'name': 'Andrew CNT-195', 'k1': 0.338633, 'k2': 0.000272, },
+	'CNT-200': { 'name': 'Andrew CNT-200', 'k1': 0.319735, 'k2': 0.000284, },
+	'CNT-240': { 'name': 'Andrew CNT-240', 'k1': 0.239390, 'k2': 0.000344, },
+	'CNT-300': { 'name': 'Andrew CNT-300', 'k1': 0.192298, 'k2': 0.000257, },
+	'CNT-400': { 'name': 'Andrew CNT-400', 'k1': 0.121920, 'k2': 0.000230, },
+	'CNT-500': { 'name': 'Andrew CNT-500', 'k1': 0.097536, 'k2': 0.000221, },
+	'CNT-600': { 'name': 'Andrew CNT-600', 'k1': 0.076078, 'k2': 0.000245, },
+	'FSJ1-50': { 'name': 'Andrew FSJ1-50', 'k1': 0.172242, 'k2': 0.000453, },
+	'FSJ2-50': { 'name': 'Andrew FSJ2-50', 'k1': 0.116098, 'k2': 0.000388, },
+	'FSJ4-50': { 'name': 'Andrew FSJ4-50', 'k1': 0.099090, 'k2': 0.000470, },
+	'HL4RP-50A': { 'name': 'Andrew HL4RP-50A', 'k1': 0.064709, 'k2': 0.000210, },
+	'LDF1-50': { 'name': 'Andrew LDF1-50', 'k1': 0.119695, 'k2': 0.000372, },
+	'LDF2-50': { 'name': 'Andrew LDF2-50', 'k1': 0.101102, 'k2': 0.000327, },
+	'LDF4-50A': { 'name': 'Andrew LDF4-50A', 'k1': 0.064343, 'k2': 0.000187, },
+	'LDF5-50A': { 'name': 'Andrew LDF5-50A', 'k1': 0.034839, 'k2': 0.000153, },
+	'LDF6-50': { 'name': 'Andrew LDF6-50', 'k1': 0.023942, 'k2': 0.000140, },
+	'LDF7-50': { 'name': 'Andrew LDF7-50', 'k1': 0.019050, 'k2': 0.000139, },
+	'VXL5-50': { 'name': 'Andrew VXL5-50', 'k1': 0.038222, 'k2': 0.000153, },
+	'VXL7-50': { 'name': 'Andrew VXL7-50', 'k1': 0.019065, 'k2': 0.000139, },
+	'ARRL300': { 'name': 'ARRL Generic 300', 'k1': 0.101803, 'k2': 0.000682, },
+	'ARRL450': { 'name': 'ARRL Generic 450 Ladder', 'k1': 0.027130, 'k2': 0.000242, },
+	'AF8': { 'name': 'Australian Twin flex 24/0.20 (0.5sqmm)', 'k1': 0.914400, 'k2': 0.030480, },
+	'B1189A': { 'name': 'Belden 1189A (RG6/U)', 'k1': 0.189860, 'k2': 0.000413, },
+	'B1530A': { 'name': 'Belden 1530A (RG6/U)', 'k1': 0.192085, 'k2': 0.000418, },
+	'B1694A': { 'name': 'Belden 1694A (RG-6/U)', 'k1': 0.187208, 'k2': 0.000512, },
+	'B7806R': { 'name': 'Belden 7806R', 'k1': 0.297119, 'k2': 0.001468, },
+	'B8210': { 'name': 'Belden 8210 (13AWG twin)', 'k1': 0.325526, 'k2': 0.007102, },
+	'B8216': { 'name': 'Belden 8216 (RG-174/U)', 'k1': 0.755599, 'k2': 0.009696, },
+	'B8222': { 'name': 'Belden 8222 (20AWG twin)', 'k1': 0.741578, 'k2': 0.002617, },
+	'B8237': { 'name': 'Belden 8237 (RG8/U)', 'k1': 0.170871, 'k2': 0.001964, },
+	'B8259': { 'name': 'Belden 8259 (RG58A/U)', 'k1': 0.453238, 'k2': 0.008364, },
+	'B8262': { 'name': 'Belden 8262 (RG-58C/U)', 'k1': 0.397459, 'k2': 0.009004, },
+	'B8267': { 'name': 'Belden 8267 (RG-213/U)', 'k1': 0.164104, 'k2': 0.002790, },
+	'B8268': { 'name': 'Belden 8268 (RG-214/U)', 'k1': 0.179100, 'k2': 0.002186, },
+	'B83241': { 'name': 'Belden 83241 (RG-141/U)', 'k1': 0.373685, 'k2': 0.001585, },
+	'B84303': { 'name': 'Belden 84303 (RG303/U)', 'k1': 0.373685, 'k2': 0.001593, },
+	'B84316': { 'name': 'Belden 84316 (RG316)', 'k1': 0.790956, 'k2': 0.003990, },
+	'B9011': { 'name': 'Belden 9011', 'k1': 0.115641, 'k2': 0.000497, },
+	'B9204': { 'name': 'Belden 9204 (RG-59/U)', 'k1': 0.319126, 'k2': 0.001792, },
+	'B9212': { 'name': 'Belden 9212 (RG-11/U)', 'k1': 0.181752, 'k2': 0.001497, },
+	'B9258': { 'name': 'Belden 9258 (RG-8/X)', 'k1': 0.285110, 'k2': 0.002264, },
+	'B9269': { 'name': 'Belden 9269 (RG-62/U)', 'k1': 0.263500, 'k2': 0.000358, },
+	'B9275': { 'name': 'Belden 9275', 'k1': 0.222077, 'k2': 0.000573, },
+	'B9913': { 'name': 'Belden 9913', 'k1': 0.112685, 'k2': 0.000963, },
+	'B9914': { 'name': 'Belden 9914', 'k1': 0.121585, 'k2': 0.000547, },
+	'C1188': { 'name': 'Carol C.1188', 'k1': 0.444703, 'k2': 0.000406, },
+	'P3-500-CA': { 'name': 'Commscope P3-500 CA', 'k1': 0.070866, 'k2': 0.000289, },
+	'P3-750-JCA': { 'name': 'Commscope P3-750 JCA', 'k1': 0.047610, 'k2': 0.000237, },
+	'DBF': { 'name': 'Davis BURY-FLEX', 'k1': 0.118506, 'k2': 0.001408, },
+	'D-RG6': { 'name': 'Digimatch RG6', 'k1': 0.210312, 'k2': 0.000000, },
+	'ECO10': { 'name': 'Ecoflex 10', 'k1': 0.117927, 'k2': 0.000590, },
+	'ECO15': { 'name': 'Ecoflex 15', 'k1': 0.081473, 'k2': 0.000412, },
+	'RG-8X': { 'name': 'Generic RG-8X', 'k1': 0.26904, 'k2': 0.00572, },
+	'LL-195': { 'name': 'Jefatech Low Loss 195', 'k1': 0.424282, 'k2': 0.000563, },
+	'LL-400': { 'name': 'Jefatech Low Loss 400', 'k1': 0.122286, 'k2': 0.000260, },
+	'LL-400F': { 'name': 'Jefatech Low Loss 400 Flex', 'k1': 0.146761, 'k2': 0.000312, },
+	'LL-600': { 'name': 'Jefatech Low Loss 600', 'k1': 0.075560, 'k2': 0.000260, },
+	'5D2V': { 'name': 'JIS 5D2V', 'k1': 0.249022, 'k2': 0.001442, },
+	'8D2V': { 'name': 'JIS 8D2V', 'k1': 0.188397, 'k2': 0.001157, },
+	'LCF38-50': { 'name': 'LCF38-50', 'k1': 0.102291, 'k2': 0.000219, },
+	'O600': { 'name': 'Open / air dielectric (150/2.00)', 'k1': 0.018471, 'k2': 0.000000, },
+	'O400': { 'name': 'Open / air dielectric ( 19/1.30)', 'k1': 0.042672, 'k2': 0.000000, },
+	'O470': { 'name': 'Open / air dielectric ( 25.4/1.02)', 'k1': 0.046939, 'k2': 0.000000, },
+	'O360': { 'name': 'Open / air dielectric (  7.5/0.72)', 'k1': 0.086868, 'k2': 0.000000, },
+	'O450': { 'name': 'Open / TE-450SP (50/2.0)', 'k1': 0.024841, 'k2': 0.000000, },
+	'R9001': { 'name': 'RFI Cellfoam', 'k1': 0.462382, 'k2': 0.000000, },
+	'R9006': { 'name': 'RFI Cellfoil', 'k1': 0.346558, 'k2': 0.000000, },
+	'RG-11/U': { 'name': 'RG-11/U', 'k1': 0.185898, 'k2': 0.001227, },
+	'RG-122/U': { 'name': 'RG-122/U', 'k1': 0.612953, 'k2': 0.007160, },
+	'RG-141A/U': { 'name': 'RG-141A/U', 'k1': 0.260238, 'k2': 0.004730, },
+	'RG-142B/U': { 'name': 'RG-142B/U', 'k1': 0.374294, 'k2': 0.001680, },
+	'RG-174/U': { 'name': 'RG-174/U', 'k1': 0.792175, 'k2': 0.004843, },
+	'RG-178B/U': { 'name': 'RG-178B/U', 'k1': 1.338682, 'k2': 0.003533, },
+	'RG-179B/U': { 'name': 'RG-179B/U', 'k1': 0.990905, 'k2': 0.000000, },
+	'RG-180B/U': { 'name': 'RG-180B/U', 'k1': 0.549554, 'k2': 0.000000, },
+	'RG-187A/U': { 'name': 'RG-187A/U', 'k1': 0.990905, 'k2': 0.000000, },
+	'RG-188A/U': { 'name': 'RG-188A/U', 'k1': 0.953414, 'k2': 0.000192, },
+	'RG-196A/U': { 'name': 'RG-196A/U', 'k1': 1.338682, 'k2': 0.003533, },
+	'RG-213/U': { 'name': 'RG-213/U', 'k1': 0.181844, 'k2': 0.003094, },
+	'RG-214/U': { 'name': 'RG-214/U', 'k1': 0.181844, 'k2': 0.003094, },
+	'RG-218/U': { 'name': 'RG-218/U', 'k1': 0.085893, 'k2': 0.001607, },
+	'RG-223/U': { 'name': 'RG-223/U', 'k1': 0.399593, 'k2': 0.003603, },
+	'RG-303/U': { 'name': 'RG-303/U', 'k1': 0.260238, 'k2': 0.004730, },
+	'RG-316/U': { 'name': 'RG-316/U', 'k1': 0.848563, 'k2': 0.003639, },
+	'RG-400': { 'name': 'RG-400', 'k1': 0.329489, 'k2': 0.002790, },
+	'RG-402': { 'name': 'RG-402', 'k1': 0.401422, 'k2': 0.000737, },
+	'RG-405': { 'name': 'RG-405', 'k1': 0.669950, 'k2': 0.000928, },
+	'RG-58A/U': { 'name': 'RG-58A/U', 'k1': 0.394411, 'k2': 0.009010, },
+	'RG-58C/U': { 'name': 'RG-58C/U', 'k1': 0.394411, 'k2': 0.009010, },
+	'RG-58/U': { 'name': 'RG-58/U', 'k1': 0.424282, 'k2': 0.003615, },
+	'RG-59B/U': { 'name': 'RG-59B/U', 'k1': 0.317906, 'k2': 0.001923, },
+	'RG-59/U': { 'name': 'RG-59/U', 'k1': 0.320954, 'k2': 0.001844, },
+	'RG-62B/U': { 'name': 'RG-62B/U', 'k1': 0.253441, 'k2': 0.002945, },
+	'RG-62/U': { 'name': 'RG-62/U', 'k1': 0.265359, 'k2': 0.000287, },
+	'RG-6A/U': { 'name': 'RG-6A/U', 'k1': 0.141976, 'k2': 0.003380, },
+	'RG-8/U': { 'name': 'RG-8/U', 'k1': 0.181844, 'k2': 0.003094, },
+	'RG-9/U': { 'name': 'RG-9/U', 'k1': 0.181844, 'k2': 0.003094, },
+	'SM141-35': { 'name': 'SUCOFORM_141_35', 'k1': 0.492557, 'k2': 0.000273, },
+	'SM141': { 'name': 'SUCOFORM_141', 'k1': 0.342290, 'k2': 0.001219, },
+	'LMR-1200': { 'name': 'Times Microwave LMR-1200', 'k1': 0.037368, 'k2': 0.000160, },
+	'LMR-1700': { 'name': 'Times Microwave LMR-1700', 'k1': 0.026460, 'k2': 0.000160, },
+	'LMR-195': { 'name': 'Times Microwave LMR-195', 'k1': 0.356921, 'k2': 0.000470, },
+	'LMR-195-UF': { 'name': 'Times Microwave LMR-195-UF', 'k1': 0.424282, 'k2': 0.000563, },
+	'LMR-200': { 'name': 'Times Microwave LMR-200', 'k1': 0.320954, 'k2': 0.000330, },
+	'LMR-200-UF': { 'name': 'Times Microwave LMR-200-UF', 'k1': 0.384962, 'k2': 0.000396, },
+	'LMR-240': { 'name': 'Times Microwave LMR-240', 'k1': 0.242072, 'k2': 0.000330, },
+	'LMR-240-UF': { 'name': 'Times Microwave LMR-240-UF', 'k1': 0.290505, 'k2': 0.000396, },
+	'LMR-300': { 'name': 'Times Microwave LMR-300', 'k1': 0.191933, 'k2': 0.000330, },
+	'LMR-400-75': { 'name': 'Times Microwave LMR-400-75', 'k1': 0.115580, 'k2': 0.000260, },
+	'LMR-400': { 'name': 'Times Microwave LMR-400', 'k1': 0.122286, 'k2': 0.000260, },
+	'LMR-400-UF': { 'name': 'Times Microwave LMR-400-UF', 'k1': 0.146761, 'k2': 0.000312, },
+	'LMR-500': { 'name': 'Times Microwave LMR-500', 'k1': 0.096591, 'k2': 0.000260, },
+	'LMR-500-UF': { 'name': 'Times Microwave LMR-500-UF', 'k1': 0.115915, 'k2': 0.000312, },
+	'LMR-600': { 'name': 'Times Microwave LMR-600', 'k1': 0.075560, 'k2': 0.000260, },
+	'LMR-600-UF': { 'name': 'Times Microwave LMR-600-UF', 'k1': 0.090648, 'k2': 0.000312, },
+	'LMR-900': { 'name': 'Times Microwave LMR-900', 'k1': 0.051755, 'k2': 0.000160, },
+	'UR57': { 'name': 'UR57', 'k1': 0.170962, 'k2': 0.001726, },
+	'UR67': { 'name': 'UR67', 'k1': 0.184160, 'k2': 0.001682, },
+	'UT-141-25': { 'name': 'UT-141C-25', 'k1': 0.437388, 'k2': 0.000810, },
+	'UT-141-35': { 'name': 'UT-141C-35', 'k1': 0.368198, 'k2': 0.000827, },
+	'UT-141-50': { 'name': 'UT-141-HA-M17', 'k1': 0.332537, 'k2': 0.001158, },
+	'WF103': { 'name': 'WestFlex 103', 'k1': 0.108174, 'k2': 0.000632, },
+	'W551': { 'name': 'Wireman 551', 'k1': 0.049591, 'k2': 0.001200, },
+	'W551w': { 'name': 'Wireman 551 wet', 'k1': 0.056540, 'k2': 0.071750, },
+	'W552': { 'name': 'Wireman 552', 'k1': 0.050993, 'k2': 0.001000, },
+	'W552w': { 'name': 'Wireman 552 wet', 'k1': 0.055565, 'k2': 0.061813, },
+	'W553': { 'name': 'Wireman 553', 'k1': 0.062088, 'k2': 0.000900, },
+	'W553w': { 'name': 'Wireman 553 wet', 'k1': 0.072908, 'k2': 0.055108, },
+	'W554': { 'name': 'Wireman 554', 'k1': 0.041392, 'k2': 0.001700, },
+	'W554w': { 'name': 'Wireman 554 wet', 'k1': 0.030815, 'k2': 0.077572, },
+	'ZIP105': { 'name': 'ZIP 105 (2.74/1.22)', 'k1': 0.711098, 'k2': 0.127498, },
 };
 var Bands = {
 	'160m':[1800000,2000000],
