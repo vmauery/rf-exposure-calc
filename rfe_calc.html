@@ -1404,6 +1404,7 @@ function load_connections(conn_data) {
 }
 
 function page_init() {
+	$('#tabs > ul').show()
 	$('#eximport-import').unbind('click').click(import_data);
 	$('#eximport-export').unbind('click').click(export_data);
 	$('#eximport-reset').unbind('click').click(reset_data);
@@ -1818,7 +1819,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 </head><body bgcolor="#ffffff" text="#000000">
 
 <div id="tabs">
-	<ul>
+	<ul class="initial-noshow">
 		<li><a href="#transmitters"><span>Transmitters</span></a></li>
 		<li><a href="#antennas"><span>Antennas</span></a></li>
 		<li><a href="#connections"><span>Connections</span></a></li>
@@ -2018,11 +2019,16 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 	<div id="about">
 		<div class="text hideme">
 		<h2>Your Web Browser is Not Supported</h2>
-		<p>Sorry for the inconvenience. The N7OH RFE Calculator requires just about
-		anything except Internet Explorer.  Try <a href="http://www.getfirefox.com/">
+		<p>Sorry for the inconvenience. The N7OH RFE Calculator requires just
+		about anything except Internet Explorer.  Rumor has it that it works on
+		IE 8 (and later versions), but you run that at your own risk;
+		I am not able to test that browser.
+		Try <a href="http://www.getfirefox.com/">
 		FireFox</a>, <a href="http://www.opera.com/download/">Opera</a>,
-		<a href="http://www.google.com/chrome">Chrome</a>, or maybe even
-		Safari.  Whatever you try, make sure it is a new browser that supports HTML 5.
+		<a href="http://www.google.com/chrome">Chrome</a>, or maybe even Safari.
+		Whatever you try, make sure it is a new browser that supports HTML 5.
+		In addition, you <b>must have JavaScript enabled</b> for this page
+		or it will not work at all.
 		</p>
 		<p>73,<br/>Vernon Mauery, N7OH</p>
 		</div>
