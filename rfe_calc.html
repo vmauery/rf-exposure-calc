@@ -218,11 +218,11 @@ function TransmitterBand(xmtr, band, bandinfo) {
 
 	/* member functions */
 	this.save = function() {
-		var band = $('#edit-tband-band').attr('value');
-		var power = parseFloat($('#edit-tband-power').attr('value'));
-		var mod = $('#edit-tband-mod').attr('value');
-		var ce = parseFloat($('#edit-tband-ce').attr('value'));
-		var ue = parseFloat($('#edit-tband-ue').attr('value'));
+		var band = $('#edit-tband-band').val()
+		var power = parseFloat($('#edit-tband-power').val());
+		var mod = $('#edit-tband-mod').val();
+		var ce = parseFloat($('#edit-tband-ce').val());
+		var ue = parseFloat($('#edit-tband-ue').val());
 		var msg;
 		if (!is_numeric(power) || power <= 0) {
 			if (!is_numeric(power))
@@ -292,11 +292,11 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		$('#edit-tband-band').empty().append(select_options(band_keys, this.band));
 		$('#edit-tband-mod').empty().append(select_options(mod_keys, this.mod));
 		// set the field values
-		$('#edit-tband-band').attr('value', this.band);
-		$('#edit-tband-power').attr('value', this.power);
-		$('#edit-tband-mod').attr('value', this.mod);
-		$('#edit-tband-ce').attr('value', this.ce);
-		$('#edit-tband-ue').attr('value', this.ue);
+		$('#edit-tband-band').val(this.band);
+		$('#edit-tband-power').val(this.power);
+		$('#edit-tband-mod').val(this.mod);
+		$('#edit-tband-ce').val(this.ce);
+		$('#edit-tband-ue').val(this.ue);
 		// set the buttons to reflect this object
 		var thing = this;
 		$('#tband-editor').dialog('option', {
@@ -363,7 +363,7 @@ function Transmitter(init_data) {
 	};
 
 	this.save = function() {
-		var name = $('#edit-xmtr-name').attr('value');
+		var name = $('#edit-xmtr-name').val();
 		var samename = transmitter_by_name(name);
 		if (samename != null && samename.id != this.id) {
 			form_message($('#xmtr-editor-msg'),
@@ -392,7 +392,7 @@ function Transmitter(init_data) {
 			title = 'Edit transmitter "'+this.name+'"';
 		}
 		// set the field values
-		$('#edit-xmtr-name').attr('value', this.name);
+		$('#edit-xmtr-name').val(this.name);
 		// set the buttons to reflect this object
 		var thing = this;
 		$('#xmtr-editor').dialog('option', {
@@ -480,8 +480,8 @@ function AntennaBand(ant, band, gain) {
 
 	/* member functions */
 	this.save = function() {
-		var band = $('#edit-aband-band').attr('value');
-		var gain = parseFloat($('#edit-aband-gain').attr('value'));
+		var band = $('#edit-aband-band').val();
+		var gain = parseFloat($('#edit-aband-gain').val());
 		if (!is_numeric(gain)) {
 			form_message($('#aband-editor-msg'),
 				'Gain must be numeric',
@@ -521,8 +521,8 @@ function AntennaBand(ant, band, gain) {
 		band_keys = array_zip(band_keys, band_keys);
 		$('#edit-aband-band').empty().append(select_options(band_keys, this.band));
 		// set the field values
-		$('#edit-aband-band').attr('value', this.band);
-		$('#edit-aband-gain').attr('value', this.gain);
+		$('#edit-aband-band').val(this.band);
+		$('#edit-aband-gain').val(this.gain);
 		// set the buttons to reflect this object
 		var thing = this;
 		$('#aband-editor').dialog('option', {
@@ -590,10 +590,10 @@ function Antenna(name, ant_data) {
 	};
 
 	this.save = function() {
-		var name = $('#edit-antenna-name').attr('value');
-		var cdx = parseFloat($('#edit-antenna-cdx').attr('value'));
-		var udx = parseFloat($('#edit-antenna-udx').attr('value'));
-		var ground = $('#edit-antenna-ground').attr('value');
+		var name = $('#edit-antenna-name').val();
+		var cdx = parseFloat($('#edit-antenna-cdx').val());
+		var udx = parseFloat($('#edit-antenna-udx').val());
+		var ground = $('#edit-antenna-ground').val();
 		ground = (ground == 'false')?false:true;
 		var samename = antenna_by_name(name);
 		if (samename != null && samename.id != this.id) {
@@ -645,10 +645,10 @@ function Antenna(name, ant_data) {
 			title = 'Edit antenna "'+this.name+'"';
 		}
 		// set the field values
-		$('#edit-antenna-name').attr('value', this.name);
-		$('#edit-antenna-cdx').attr('value', this.cdx);
-		$('#edit-antenna-udx').attr('value', this.udx);
-		$('#edit-antenna-ground').attr('value', this.ground);
+		$('#edit-antenna-name').val(this.name);
+		$('#edit-antenna-cdx').val(this.cdx);
+		$('#edit-antenna-udx').val(this.udx);
+		$('#edit-antenna-ground').val(this.ground);
 		// set the buttons to reflect this object
 		var thing = this;
 		$('#antenna-editor').dialog('option', {
@@ -749,12 +749,12 @@ function Connection(conn_data) {
 	};
 
 	this.save = function() {
-		var xmtr = transmitters[parseInt($('#edit-conn-xmtr').attr('value'))];
-		var ant = antennas[parseInt($('#edit-conn-ant').attr('value'))];
-		var tloss = parseFloat($('#edit-conn-tloss').attr('value'));
-		var wire = $('#edit-conn-wire').attr('value');
-		var wlen = parseFloat($('#edit-conn-wlen').attr('value'));
-		var other = parseFloat($('#edit-conn-other').attr('value'));
+		var xmtr = transmitters[parseInt($('#edit-conn-xmtr').val())];
+		var ant = antennas[parseInt($('#edit-conn-ant').val())];
+		var tloss = parseFloat($('#edit-conn-tloss').val());
+		var wire = $('#edit-conn-wire').val();
+		var wlen = parseFloat($('#edit-conn-wlen').val());
+		var other = parseFloat($('#edit-conn-other').val());
 		var name = xmtr.name + ' <-> ' + ant.name;
 		var msg;
 		if (!is_numeric(tloss)) {
@@ -829,12 +829,12 @@ function Connection(conn_data) {
 		$('#edit-conn-ant').empty().append(select_options(this.ant_list(), aid));
 		$('#edit-conn-wire').empty().append(select_options(wire_keys, this.wire));
 		// set the field values
-		$('#edit-conn-xmtr').attr('value', this.xmtr);
-		$('#edit-conn-ant').attr('value', this.ant);
-		$('#edit-conn-tloss').attr('value', this.tuner_loss);
-		$('#edit-conn-wire').attr('value', this.wire);
-		$('#edit-conn-wlen').attr('value', this.length);
-		$('#edit-conn-other').attr('value', this.other_loss);
+		$('#edit-conn-xmtr').val(this.xmtr);
+		$('#edit-conn-ant').val(this.ant);
+		$('#edit-conn-tloss').val(this.tuner_loss);
+		$('#edit-conn-wire').val(this.wire);
+		$('#edit-conn-wlen').val(this.length);
+		$('#edit-conn-other').val(this.other_loss);
 		// set the buttons to reflect this object
 		var thing = this;
 		$('#conn-editor').dialog('option', {
@@ -906,7 +906,7 @@ function Connection(conn_data) {
 			var freq = (Bands[b][1] + Bands[b][0])/2.0;
 			var freqmhz = freq / 1000000.0;
 			var mldb = (wires[this.wire].k1 * Math.sqrt(freqmhz) + wires[this.wire].k2 * freqmhz);
-			console.log('wire: '+this.wire+', freq: '+freqmhz+' MHz, mldb: '+mldb);
+			// console.log('wire: '+this.wire+', freq: '+freqmhz+' MHz, mldb: '+mldb);
 			var line_loss = (this.length/100.0)*mldb;
 			var tloss = this.tuner_loss + this.other_loss + line_loss;
 			var tlossdb = -tloss + ant.bands[b].gain;
@@ -1018,7 +1018,7 @@ function add_a_thing(ele, next) {
 	var id;
 	var thing;
 	if (next == null) {
-		var m = $(ele).attr('id').split('-');
+		var m = $(ele).prop('id').split('-');
 		type = m[2];
 		id = parseInt(m[3]);
 		thing = null;
@@ -1051,7 +1051,7 @@ function add_a_thing(ele, next) {
 }
 
 function edit_a_thing(ele) {
-	var m = $(ele).attr('id').split('-');
+	var m = $(ele).prop('id').split('-');
 	var type = m[2];
 	var id = parseInt(m[3]);
 	var index = m[4];
@@ -1079,7 +1079,7 @@ function edit_a_thing(ele) {
 }
 
 function del_a_thing(ele) {
-	var m = $(ele).attr('id').split('-');
+	var m = $(ele).prop('id').split('-');
 	var type = m[2];
 	var id = parseInt(m[3]);
 	var index = m[4];
@@ -1466,13 +1466,13 @@ function do_interactive() {
 		$(this).find('.action-box').hide();
 	});
 	$('.link').filter('.help').unbind('click').click(function() {
-		var m = $(this).attr('id').split('-');
+		var m = $(this).prop('id').split('-');
 		var type = m[1];
 		$('#help-'+type).hide();
 		$('#help-text-'+type).slideDown(250);
 	});
 	$('.link').filter('.help-hide').unbind('click').click(function() {
-		var m = $(this).attr('id').split('-');
+		var m = $(this).prop('id').split('-');
 		var type = m[2];
 		$('#help-text-'+type).slideUp(250, function() {
 			$('#help-'+type).show();
