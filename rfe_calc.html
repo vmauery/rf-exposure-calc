@@ -13,7 +13,7 @@ License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with RFE_Calc.  If not, see <http://www.gnu.org/licenses/>.
 
-Copyright © 2009-2011, Vernon Mauery (N7OH)
+Copyright © 2009-2014, Vernon Mauery (N7OH)
 -->
 <html><head>
 <meta charset="UTF-8">
@@ -132,12 +132,220 @@ input.number {
 .initial-noshow {
 	display: none;
 }
+.custom-combobox {
+	position: relative;
+	display: inline-block;
+}
+.custom-combobox-toggle {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	margin-left: -1px;
+	padding: 0;
+	/* support: IE7 */
+	*height: 1.5em;
+	*top: 0.1em;
+}
+.custom-combobox-input {
+	margin: 0;
+}
 </style>
 <script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/jquery-ui.js"></script>
 <script type="text/javascript">
 <!--//
-(function($) {$(function() {
+(function($) {
+		$.widget( "ui.combobox", {
+			widgetEventPrefix: "combobox",
+
+			_create: function() {
+				this.wrapper = $( "<span>" )
+					.addClass( "custom-combobox" )
+					.insertAfter( this.element.hide() );
+
+				this._createAutocomplete();
+				this._createShowAllButton();
+				this._validityCheck = null;
+			},
+
+			_createAutocomplete: function() {
+				var selected = this.element.children( ":selected" ),
+					value = selected.val() ? selected.text() : "";
+
+				this.input = $( "<input>" )
+					.appendTo( this.wrapper )
+					.val( value )
+					.removeAttr( "title", "" )
+					.addClass( "custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
+					.autocomplete({
+						delay: 0,
+						minLength: 0,
+						source: $.proxy( this, "_source" )
+					});
+
+				this._on( this.input, {
+					autocompleteselect: function( event, ui ) {
+						ui.item.option.selected = true;
+						this._trigger( "select", event, {
+							item: ui.item.option
+						});
+					},
+
+					autocompletechange: "_newIfNotFound"
+				});
+			},
+
+			_createShowAllButton: function() {
+				var input = this.input,
+					wasOpen = false;
+
+				$( "<a>" )
+					.prop( "tabIndex", -1 )
+					.prop( "title", "Show All Items" )
+					.appendTo( this.wrapper )
+					.button({
+						icons: {
+							primary: "ui-icon-triangle-1-s"
+						},
+						text: false
+					})
+					.removeClass( "ui-corner-all" )
+					.addClass( "custom-combobox-toggle ui-corner-right" )
+					.mousedown(function() {
+						wasOpen = input.autocomplete( "widget" ).is( ":visible" );
+					})
+					.click(function() {
+						input.focus();
+
+						// Close if already visible
+						if ( wasOpen ) {
+							return;
+						}
+
+						// Pass empty string as value to search for, displaying all results
+						input.autocomplete( "search", "" );
+					});
+			},
+
+			_source: function( request, response ) {
+				var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+				response( this.element.children( "option" ).map(function() {
+					var text = $( this ).text();
+					if ( this.value && ( !request.term || matcher.test(text) ) )
+						return {
+							label: text,
+							value: text,
+							option: this
+						};
+				}) );
+			},
+
+			_removeIfInvalid: function( event, ui ) {
+
+				// Selected an item, nothing to do
+				if ( ui.item ) {
+					return;
+				}
+
+				// Search for a match (case-insensitive)
+				var value = this.input.val(),
+					valueLowerCase = value.toLowerCase(),
+					valid = false;
+				this.element.children( "option" ).each(function() {
+					if ( $( this ).text().toLowerCase() === valueLowerCase ) {
+						this.selected = valid = true;
+						return false;
+					}
+				});
+
+				// Found a match, nothing to do
+				if ( valid ) {
+					return;
+				}
+
+				// Remove invalid value
+				this.input
+					.val( "" )
+					.prop( "title", value + " didn't match any item" );
+				this.element.val( "" );
+				this.input.data( "ui-autocomplete" ).term = "";
+			},
+
+			_newIfNotFound: function( event, ui ) {
+
+				// Selected an item, nothing to do
+				if ( ui.item ) {
+					return;
+				}
+
+				// Search for a match (case-insensitive)
+				var value = this.input.val(),
+					valueLowerCase = value.toLowerCase(),
+					valid = false;
+				this.element.children( "option" ).each(function() {
+					if ( $( this ).text().toLowerCase() === valueLowerCase ) {
+						this.selected = valid = true;
+						return false;
+					}
+				});
+
+				// Found a match, nothing to do
+				if ( valid ) {
+					return;
+				}
+
+				// Remove invalid value
+				if (this._validityCheck != null) {
+					if ((typeof this._validityCheck === "function") &&
+							this._validityCheck.apply(null, [value]) == null) {
+						return this._removeIfInvalid(event, ui);
+					}
+				}
+
+				this.input.val( value );
+				this.element.val( value );
+				this.input.data( "ui-autocomplete" ).term = value;
+				//  console.log("keeping combobox value as '"+value+"'");
+			},
+
+			val: function ( newVal ) {
+				if (!arguments.length) {
+					var value = this.input.val();
+					selected = this.element.children(":selected");
+					if (selected.length > 0)
+						return selected.val();
+					return value;
+				}
+
+				var valid = false;
+				this.element.prop('selectedIndex', -1);
+				this.element.children('option').each(function() {
+						if ( this.value == newVal ) {
+						this.selected = valid = true;
+						return false;
+						}
+					});
+
+				if ( valid ) {
+					this.input.val(this.element.children(':selected').text());
+				} else {
+					this.input.val( "" );
+					this.element.prop('selectedIndex', -1);
+				}
+
+			},
+
+			validityCheck: function ( checker ) {
+				this._validityCheck = checker;
+			},
+
+			_destroy: function() {
+				this.wrapper.remove();
+				this.element.show();
+			}
+		});
+
+$(function() {
 
 if (!window.console) {
 	window.console = {};
@@ -146,6 +354,17 @@ if (!window.console) {
 }
 
 cm_per_foot = 30.48;
+
+function callback(fnstr) {
+	arguments.pop();
+	if (fnstr in window) {
+		fn = window[fnstr];
+		if (typeof fn === "function") {
+			return fn.apply(null, arguments);
+		}
+	}
+	return null;
+}
 
 function log_err(msg, e) {
 	console.error(msg + ': '+e.stack);
@@ -176,6 +395,47 @@ function array_zip(k, v) {
 	}
 	return ret;
 }
+function band_to_frequency(band) {
+	if (band in Bands) {
+		return (Bands[band][1] + Bands[band][0])/2.0;
+	}
+	bre = /^([\d.]+)\s*([cmnu]?m|[kmgt]?hz|[kmgt]?c)?$/i;
+	matches = bre.exec(band);
+	if (matches == null || matches.length < 3 || !is_numeric(matches[1])) {
+		return null;
+	}
+	var val = parseFloat(matches[1]);
+	if (matches[2] == undefined) {
+		return val;
+	}
+
+	suffix = matches[2].toLowerCase();
+	if (suffix[suffix.length-1] == 'm') {
+		var c = 299792458;
+		if (suffix == 'cm') {
+			c *= 100;
+		} else if (suffix == 'mm') {
+			c *= 1000;
+		} else if (suffix == 'um') {
+			c *= 1000000;
+		} else if (suffix == 'nm') {
+			c *= 1000000000;
+		}
+		return c / val;
+	}
+
+	var m = 1;
+	if (suffix == 'khz' || suffix == 'kc') {
+		m = 1000;
+	} else if (suffix == 'mhz' || suffix == 'mc') {
+		m = 1000000;
+	} else if (suffix == 'ghz' || suffix == 'gc') {
+		m = 1000000000;
+	} else if (suffix == 'thz' || suffix == 'tc') {
+		m = 1000000000000;
+	}
+	return m*val;
+}
 // expects an array or associative array and uses
 // key/value pairs for options, index for arrays
 function select_options(list, selected) {
@@ -205,7 +465,8 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		} else {
 			this.band = '';
 			this.power = 100;
-			this.mod = modulation_duty_factor[0];
+			var mods = array_keys(modulation_duty_factor);
+			this.mod = mods[0];
 			this.ce = 50;
 			this.ue = 100;
 		}
@@ -218,12 +479,19 @@ function TransmitterBand(xmtr, band, bandinfo) {
 
 	/* member functions */
 	this.save = function() {
-		var band = $('#edit-tband-band').val()
+		var band = $('#edit-tband-band').combobox('val');
 		var power = parseFloat($('#edit-tband-power').val());
 		var mod = $('#edit-tband-mod').val();
 		var ce = parseFloat($('#edit-tband-ce').val());
 		var ue = parseFloat($('#edit-tband-ue').val());
 		var msg;
+		if (band_to_frequency(band) == null) {
+			msg = 'Invalid Band: try X MHz, Nm, ABCD, etc.';
+			form_message($('#tband-editor-msg'),
+				msg, $('#edit-tband-tband')
+			);
+			return false;
+		}
 		if (!is_numeric(power) || power <= 0) {
 			if (!is_numeric(power))
 				msg = 'Transmitter power must be numeric';
@@ -254,7 +522,7 @@ function TransmitterBand(xmtr, band, bandinfo) {
 			);
 			return false;
 		}
-		console.log('saving '+this.band+' tband, power: '+power+', modulation: '+mod+', cont exp: '+ce+', uncont exp: '+ue);
+		// console.log('saving '+this.band+' tband, band: '+band+', power: '+power+', modulation: '+mod+', cont exp: '+ce+', uncont exp: '+ue);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
 		// while the assignment below saves us in the new (same?) band
@@ -292,7 +560,8 @@ function TransmitterBand(xmtr, band, bandinfo) {
 		$('#edit-tband-band').empty().append(select_options(band_keys, this.band));
 		$('#edit-tband-mod').empty().append(select_options(mod_keys, this.mod));
 		// set the field values
-		$('#edit-tband-band').val(this.band);
+		$('#edit-tband-band').combobox().combobox('validityCheck', band_to_frequency);
+		$('#edit-tband-band').combobox('val', this.band);
 		$('#edit-tband-power').val(this.power);
 		$('#edit-tband-mod').val(this.mod);
 		$('#edit-tband-ce').val(this.ce);
@@ -348,11 +617,10 @@ function Transmitter(init_data) {
 
 	this.fini = function() {
 		var bands = {};
-		for (band in Bands) {
-			if (band in this.bands) {
-				var v = this.bands[band].fini();
-				bands[v[0]] = v[1];
-			}
+		for (var band in this.bands) {
+			// console.log("saving "+this.name+": "+band);
+			var v = this.bands[band].fini();
+			bands[v[0]] = v[1];
 		}
 		return [this.name, bands];
 	};
@@ -374,7 +642,7 @@ function Transmitter(init_data) {
 		}
 		if (name != this.name) {
 			this.name = name;
-			console.log('saving '+this.name);
+			// console.log('saving '+this.name);
 			transmitters[this.id] = this;
 			save_connections();
 			save_transmitters();
@@ -429,8 +697,13 @@ function Transmitter(init_data) {
 		out += '<th>Uncontrolled<br/>exposure (%)</th>';
 		out += '<th></th>';
 		out += '</tr>\n';
-		for (var band in Bands) {
-			if (!(band in this.bands)) continue;
+		t_bands = {};
+		for (var b in this.bands) {
+			var bf = band_to_frequency(b);
+			t_bands[bf] = b;
+		}
+		for (var f in t_bands) {
+			var band = t_bands[f];
 			out += '<tr><td>'+band+'</td>';
 			out += '<td>'+this.bands[band].power+'</td>';
 			out += '<td>'+this.bands[band].mod+' ('+modulation_duty_factor[this.bands[band].mod]+'%)</td>';
@@ -480,7 +753,7 @@ function AntennaBand(ant, band, gain) {
 
 	/* member functions */
 	this.save = function() {
-		var band = $('#edit-aband-band').val();
+		var band = $('#edit-aband-band').combobox('val');
 		var gain = parseFloat($('#edit-aband-gain').val());
 		if (!is_numeric(gain)) {
 			form_message($('#aband-editor-msg'),
@@ -489,7 +762,7 @@ function AntennaBand(ant, band, gain) {
 			);
 			return false;
 		}
-		console.log('saving '+band+' aband, gain: '+gain);
+		// console.log('saving '+band+' aband, gain: '+gain);
 		// remove the old copy of whatever band this used to be
 		// in the case of band renaming, this gets rid of the old band
 		// while the assignment below saves us in the new (same?) band
@@ -521,7 +794,8 @@ function AntennaBand(ant, band, gain) {
 		band_keys = array_zip(band_keys, band_keys);
 		$('#edit-aband-band').empty().append(select_options(band_keys, this.band));
 		// set the field values
-		$('#edit-aband-band').val(this.band);
+		$('#edit-aband-band').combobox().combobox('validityCheck', band_to_frequency);
+		$('#edit-aband-band').combobox('val', this.band);
 		$('#edit-aband-gain').val(this.gain);
 		// set the buttons to reflect this object
 		var thing = this;
@@ -576,11 +850,9 @@ function Antenna(name, ant_data) {
 
 	this.fini = function() {
 		var bands = {};
-		for (band in Bands) {
-			if (band in this.bands) {
-				var v = this.bands[band].fini();
-				bands[v[0]] = v[1];
-			}
+		for (var band in this.bands) {
+			var v = this.bands[band].fini();
+			bands[v[0]] = v[1];
 		}
 		return [this.name, [bands, this.cdx, this.udx, this.ground]];
 	};
@@ -624,7 +896,7 @@ function Antenna(name, ant_data) {
 			);
 			return false;
 		}
-		console.log('saving "'+this.name+'" antenna, cdx: '+cdx+', udx: '+udx+', ground: '+ground);
+		// console.log('saving "'+this.name+'" antenna, cdx: '+cdx+', udx: '+udx+', ground: '+ground);
 		this.name = name;
 		this.cdx = cdx;
 		this.udx = udx;
@@ -683,8 +955,13 @@ function Antenna(name, ant_data) {
 		out += '<th width="15%">Band</th>';
 		out += '<th width="15%">Gain (dBi)</th>';
 		out += '<th></th></tr>\n';
-		for (var band in Bands) {
-			if (!(band in this.bands)) continue;
+		a_bands = {};
+		for (var b in this.bands) {
+			var bf = band_to_frequency(b);
+			a_bands[bf] = b;
+		}
+		for (var f in a_bands) {
+			var band = a_bands[f];
 			out += '<tr><td>'+band+'</td>';
 			out += '<td>'+this.bands[band].gain+'</td>';
 			out += '<td class="action-box">';
@@ -781,30 +1058,14 @@ function Connection(conn_data) {
 			);
 			return false;
 		}
-		console.log('saving "'+name+'": tloss: '+tloss+', wire: '+wire+', length: '+wlen+', other: '+other);
-		tt = this.transmitter;
-		tid = this.transmitter?this.transmitter.id:0;
-		aid = this.antenna?this.antenna.id:0;
-
+		// console.log('saving "'+name+'": tloss: '+tloss+', wire: '+wire+', length: '+wlen+', other: '+other);
 		this.transmitter = xmtr;
 		this.antenna = ant;
 		this.tuner_loss = tloss;
 		this.wire = wire;
 		this.length = wlen;
 		this.other_loss = other;
-
-		if (tt != null) {
-			for (i in connections) {
-				if (connections[i].transmitter.id == tid &&
-					connections[i].antenna.id == aid) {
-
-					connections[i] = this;
-					break;
-				}
-			}
-		} else {
-			connections.push(this);
-		}
+		connections[this.id] = this;
 		save_connections();
 		refresh();
 		return true;
@@ -828,9 +1089,14 @@ function Connection(conn_data) {
 		$('#edit-conn-xmtr').empty().append(select_options(this.xmtr_list(), tid));
 		$('#edit-conn-ant').empty().append(select_options(this.ant_list(), aid));
 		$('#edit-conn-wire').empty().append(select_options(wire_keys, this.wire));
+		// console.log('connction: xmtr='+this.transmitter.name+', ant='+this.antenna.name);
 		// set the field values
-		$('#edit-conn-xmtr').val(this.xmtr);
-		$('#edit-conn-ant').val(this.ant);
+		if (this.transmitter != null) {
+			$('#edit-conn-xmtr').val(this.transmitter.id);
+		}
+		if (this.antenna != null) {
+			$('#edit-conn-ant').val(this.antenna.id);
+		}
 		$('#edit-conn-tloss').val(this.tuner_loss);
 		$('#edit-conn-wire').val(this.wire);
 		$('#edit-conn-wlen').val(this.length);
@@ -899,14 +1165,20 @@ function Connection(conn_data) {
 		ret += '<th>Distance OK</th>';
 		ret += '</tr>\n';
 		var bands_rendered = 0;
-		for (var b in Bands) {
-			if (!(b in tm.bands) || ant.bands[b] == null) continue;
+		var tm_bands = {};
+		for (var b in tm.bands) {
+			var bf = band_to_frequency(b);
+			tm_bands[bf] = b;
+		}
+		for (var f in tm_bands) {
+			var b = tm_bands[f];
+			if (!(b in ant.bands)) continue;
 			bands_rendered++;
 			var band = tm.bands[b];
-			var freq = (Bands[b][1] + Bands[b][0])/2.0;
+			var freq = band_to_frequency(b);
 			var freqmhz = freq / 1000000.0;
 			var mldb = (wires[this.wire].k1 * Math.sqrt(freqmhz) + wires[this.wire].k2 * freqmhz);
-			// console.log('wire: '+this.wire+', freq: '+freqmhz+' MHz, mldb: '+mldb);
+			// console.log('band: '+b+', wire: '+this.wire+', freq: '+freqmhz+' MHz, mldb: '+mldb);
 			var line_loss = (this.length/100.0)*mldb;
 			var tloss = this.tuner_loss + this.other_loss + line_loss;
 			var tlossdb = -tloss + ant.bands[b].gain;
@@ -1006,7 +1278,7 @@ function connection_idx_from_antenna(name) {
 		var a = connections[c].antenna;
 		//console.log('compare "'+name+'" to "'+a.name+'"');
 		if (a.name == name) {
-			console.log('found connection: '+connections[c].name);
+			// console.log('found connection: '+connections[c].name);
 			conns.push(c);
 		}
 	}
@@ -1023,7 +1295,7 @@ function add_a_thing(ele, next) {
 		id = parseInt(m[3]);
 		thing = null;
 	} else {
-		console.log('add a thing next: '+next);
+		// console.log('add a thing next: '+next);
 		type = next[0];
 		id = next[1];
 	}
@@ -1056,7 +1328,7 @@ function edit_a_thing(ele) {
 	var id = parseInt(m[3]);
 	var index = m[4];
 	var thing = null;
-	console.log('edit_a_thing: type = '+type+', id = '+id+', index = '+index);
+	// console.log('edit_a_thing: type = '+type+', id = '+id+', index = '+index);
 	switch (type) {
 		case "xmtr":
 			thing = transmitters[id];
@@ -1084,14 +1356,14 @@ function del_a_thing(ele) {
 	var id = parseInt(m[3]);
 	var index = m[4];
 	var thing = null;
-	console.log('del_a_thing: type = '+type+', id = '+id+', index = '+index);
+	// console.log('del_a_thing: type = '+type+', id = '+id+', index = '+index);
 	switch (type) {
 		case "xmtr":
 			if (transmitters[id].ask_delete()) {
 				var name = transmitters[id].name;
 				var conns = connection_idx_from_transmitter(name);
 				for (var c in conns) {
-					console.log('deleting conn '+connections[conns[c]].name);
+					// console.log('deleting conn '+connections[conns[c]].name);
 					delete connections[conns[c]];
 				}
 				delete transmitters[id];
@@ -1110,7 +1382,7 @@ function del_a_thing(ele) {
 				var name = antennas[id].name;
 				var conns = connection_idx_from_antenna(name);
 				for (var c in conns) {
-					console.log('deleting conn '+connections[conns[c]].name);
+					// console.log('deleting conn '+connections[conns[c]].name);
 					delete connections[conns[c]];
 				}
 				delete antennas[id];
@@ -1128,7 +1400,7 @@ function del_a_thing(ele) {
 			if (connections[id].ask_delete()) {
 				for (var c in connections) {
 					if (connections[c].id == id) {
-						console.log('deleting conn '+connections[c].name);
+						// console.log('deleting conn '+connections[c].name);
 						delete connections[c];
 					}
 				}
@@ -1281,7 +1553,7 @@ var wires = {
 	'W554w': { 'name': 'Wireman 554 wet', 'k1': 0.030815, 'k2': 0.077572, },
 	'ZIP105': { 'name': 'ZIP 105 (2.74/1.22)', 'k1': 0.711098, 'k2': 0.127498, },
 };
-var Bands = {
+var ham_bands = {
 	'160m':[1800000,2000000],
 	'80m':[3500000,4000000],
 	'60m':[5330000,5405000],
@@ -1315,12 +1587,12 @@ function bands_filter(bands, current_band) {
 	var ret = {};
 	for (band in Bands) {
 		if (band == current_band || !(band in bands)) {
-			ret[band] = Bands[band];
+			var b = Bands[band];
+			ret[band] = b.slice(0, b.length);
 		}
 	}
 	return ret;
 }
-
 
 var modulation_duty_factor = {
 	'CW': 44,
@@ -1343,17 +1615,16 @@ var modulation_duty_factor = {
 var transmitters = {};
 var antennas = {};
 var connections = [];
+var Bands = {};
 
-function serialize_transmitters() {
+function save_transmitters() {
 	var xmtr_data = {}
 	for (var k in transmitters) {
 		var v = transmitters[k].fini();
 		xmtr_data[v[0]] = v[1];
 	}
-	return xmtr_data;
-}
-function save_transmitters() {
-	setvar('transmitters', serialize_transmitters());
+	setvar('transmitters', xmtr_data);
+	save_bands();
 }
 function load_transmitters(xmtr_data) {
 	xmtr_data = xmtr_data || getvar('transmitters', {});
@@ -1364,16 +1635,14 @@ function load_transmitters(xmtr_data) {
 	}
 	return t;
 }
-function serialize_antennas() {
+function save_antennas() {
 	var ant_data = {}
 	for (var k in antennas) {
 		var v = antennas[k].fini();
 		ant_data[v[0]] = v[1];
 	}
-	return ant_data;
-}
-function save_antennas() {
-	setvar('antennas', serialize_antennas());
+	setvar('antennas', ant_data);
+	save_bands();
 }
 function load_antennas(ant_data) {
 	ant_data = ant_data || getvar('antennas', {});
@@ -1384,15 +1653,12 @@ function load_antennas(ant_data) {
 	}
 	return a;
 }
-function serialize_connections() {
+function save_connections() {
 	var conn_data = new Array();
 	for (var k in connections) {
 		conn_data.push(connections[k].fini());
 	}
-	return conn_data;
-}
-function save_connections() {
-	setvar('connections', serialize_connections());
+	setvar('connections', conn_data);
 }
 function load_connections(conn_data) {
 	conn_data = conn_data || getvar('connections', []);
@@ -1401,6 +1667,50 @@ function load_connections(conn_data) {
 		c[k] = new Connection(conn_data[k]);
 	}
 	return c;
+}
+function save_bands() {
+	var band_data = {};
+	for (var t in transmitters) {
+		for (var tb in transmitters[t].bands) {
+			if (!(tb in ham_bands))
+			{
+				f = band_to_frequency(tb);
+				band_data[tb] = [f, f];
+			}
+		}
+	}
+	for (var a in antennas) {
+		for (var ab in antennas[a].bands) {
+			if (!(ab in ham_bands) && !(ab in band_data))
+			{
+				f = band_to_frequency(ab);
+				band_data[ab] = [f, f];
+			}
+		}
+	}
+	// console.log(band_data);
+	Bands = load_bands(band_data);
+	setvar('bands', band_data);
+}
+function load_bands(band_data) {
+	band_data = band_data || getvar('bands', {});
+	bands = {};
+	for (var b in ham_bands) {
+		var v = ham_bands[b];
+		bands[b] = v.slice(0, v.length);
+	}
+	for (var b in band_data) {
+		var v = band_data[b];
+		bands[b] = v.slice(0, v.length);
+	}
+	return bands;
+}
+function load_all_data()
+{
+	transmitters = load_transmitters();
+	antennas = load_antennas();
+	connections = load_connections();
+	Bands = load_bands();
 }
 
 function page_init() {
@@ -1601,12 +1911,11 @@ function reset_data_sample() {
 	setvar('antennas', lantennas);
 	setvar('transmitters', ltransmitters);
 	setvar('connections', lconnections);
+	setvar('bands', {});
 	setvar('schema', SCHEMA);
 	/*
 	// this only makes sense if we are not reloading the window
-	transmitters = load_transmitters();
-	antennas = load_antennas();
-	connections = load_connections();
+	load_all_data();
 	refresh();
 	*/
 	window.location.reload(true);
@@ -1658,9 +1967,7 @@ function import_data() {
 		setvar('transmitters', data['transmitters']);
 		setvar('schema', data['schema'] || 0)
 		check_schema();
-		transmitters = load_transmitters();
-		antennas = load_antennas();
-		connections = load_connections();
+		load_all_data();
 		refresh(false);
 	} catch (e) {
 		log_err('failed to import: ', e);
@@ -1750,7 +2057,7 @@ function getvar(name, default_value) {
 		return default_value;
 	return JSON.parse(v);
 }
-SCHEMA = 1;
+SCHEMA = 2;
 function update_schema(ver) {
 	switch (ver) {
 		case 1:
@@ -1780,6 +2087,12 @@ function update_schema(ver) {
 			}
 			delete transmitters;
 			return true;
+		case 2:
+			// added bands to the list of things we save so users
+			// can have custom bands outside of standard ham bands
+			// but really we don't have to do anything here because
+			// by default there are no custom bands...
+			return true;
 		default:
 			return true;
 	}
@@ -1805,9 +2118,7 @@ function check_schema() {
 if (('localStorage' in window) && window['localStorage'] !== null) {
 	check_schema();
 	$("#tabs").tabs();
-	transmitters = load_transmitters();
-	antennas = load_antennas();
-	connections = load_connections();
+	load_all_data();
 	page_init();
 	refresh();
 }
@@ -2034,7 +2345,7 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 		</div>
 	<p>
 	RF Exposure Calculator - Helping hams understand the mysteries of RF Exposure<br/>
-	Copyright &copy; 2009-2010 <a href='http://vernon.mauery.com/'>Vernon Mauery</a> (N7OH)<br/>
+	Copyright &copy; 2009-2014 <a href='http://vernon.mauery.com/'>Vernon Mauery</a> (N7OH)<br/>
 	</p>
 	<div class="text"><p>
 	The idea originated from the <a
