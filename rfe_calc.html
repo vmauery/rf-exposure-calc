@@ -920,7 +920,7 @@ function Antenna(name, ant_data) {
 		$('#edit-antenna-name').val(this.name);
 		$('#edit-antenna-cdx').val(this.cdx);
 		$('#edit-antenna-udx').val(this.udx);
-		$('#edit-antenna-ground').val(this.ground);
+		$('#edit-antenna-ground').val(''+this.ground);
 		// set the buttons to reflect this object
 		var thing = this;
 		$('#antenna-editor').dialog('option', {
@@ -944,13 +944,14 @@ function Antenna(name, ant_data) {
 	};
 
 	this.render = function() {
+		var gndstr = '';
 		var out = '<div class="antenna action-popup"><div class="action-box">';
 		out += '<a class="link add-a" id="add-a-aband-'+this.id+'">Add a band</a> |';
 		out += '<a class="link edit-a" id="edit-a-antenna-'+this.id+'">Edit</a> |';
 		out += '<a class="link del-a" id="del-a-antenna-'+this.id+'">Delete</a>';
 		out += '</div>';
 		out += '<h4>'+this.name+'</h4>\n';
-		out += 'Controlled exposure: '+this.cdx+'ft, Uncontrolled exposure: '+this.udx+'ft, Ground reflections: '+this.ground+'\n';
+		out += 'Controlled exposure: '+this.cdx+'ft, Uncontrolled exposure: '+this.udx+'ft, Ground reflections: '+(this.ground?'yes':'no')+'\n';
 		out += '<table width="100%"><tr>';
 		out += '<th width="15%">Band</th>';
 		out += '<th width="15%">Gain (dBi)</th>';
@@ -2437,8 +2438,8 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 	<div class="edit-item">
 		<label for="edit-antenna-ground">Ground reflections</label>
 		<select id="edit-antenna-ground">
-			<option value="true">True</option>
-			<option value="false">False</option>
+			<option value="true">yes</option>
+			<option value="false">no</option>
 		</select>
 	</div>
 </div>
