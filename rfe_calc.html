@@ -2241,6 +2241,21 @@ if (('localStorage' in window) && window['localStorage'] !== null) {
 			If you need to add multiple losses to put in the other losses
 			field, you just add the dB values together.
 			</p><p>
+			Whether or not there is a tuner in the connection, it is safe to
+			set the Tuner loses as 0 (dB). The limits in the formula are at
+			their maximums, so any setup that is less than the maximum will
+			still be fine when adding a component loss to the path. It is
+			possible to change it later if you want something closer to the
+			actual RF output.
+			</p><p>
+			The same goes for other items in the path (Other Losses), because
+			the calculator is meant to check if maximum output is less than the
+			requirements. Any losses in the connection between the transmitter
+			and the antenna will reduce the actual RF output. In other words,
+			if the calculated RF exposures are within limits without taking
+			into account the connection losses, the setup will still be within
+			limits when the connection losses are taken into account.
+			</p><p>
 			Currently, I only have specs on a few wire types available, but if
 			you want this application to have more, feel free to send the specs
 			to me and I will add them.  Just make sure that they cover a wide
